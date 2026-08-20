@@ -40,7 +40,7 @@ const SITE = {
   sectionHint:  "작품을 선택하면 소개 카드가 열립니다",
 
   /* 배지·문구 형식 — 이 전시관은 대표님 대상 Z트랙 단일 과정입니다 */
-  badge:      (cohort, n) => `Z트랙 · ${String(n).padStart(2, "0")}호`,
+  badge:      () => "Z트랙",   /* 작품 번호는 표시하지 않습니다 */
   artistLine: item => `이 앱은 <b>${item.group} ${item.author} 대표님</b>의 작품입니다.`,
 
   labelTopic:  "작품 주제",
@@ -100,7 +100,7 @@ const ITEMS = [
 
   /* 예시 ① 세 링크가 모두 있는 경우 */
   {
-    no: 1, cohort: "z",
+    no: 1, cohort: "z", sample: true,
     group: "○○과", author: "김○○",
     title: "도자기 타임머신",
     topic: "도자기 사진을 올리면 제작 시기와 기법을 추정해 설명해 줍니다. 도록 작성용 초안을 만드는 데 씁니다.",
@@ -117,7 +117,7 @@ const ITEMS = [
 
   /* 예시 ② 이미지가 없고 유튜브만 있는 경우 — 썸네일이 자동으로 채워집니다 */
   {
-    no: 2, cohort: "z",
+    no: 2, cohort: "z", sample: true,
     group: "○○과", author: "이○○",
     title: "전시 관람 동선 카드",
     topic: "관람객이 남은 시간을 입력하면 그 시간에 맞는 관람 순서를 추천합니다.",
@@ -134,7 +134,7 @@ const ITEMS = [
 
   /* 예시 ③ 링크가 아직 없는 경우 — 버튼이 비활성되고 자동 전시에서 제외됩니다 */
   {
-    no: 3, cohort: "z",
+    no: 3, cohort: "z", sample: true,
     group: "○○과", author: "박○○",
     title: "재료 소진 알림판",
     topic: "공방 재료의 남은 수량을 기록하고 기준 이하로 떨어지면 표시해 줍니다.",
@@ -147,7 +147,7 @@ const ITEMS = [
 
   /* 예시 ④ 이미지가 있는 경우 */
   {
-    no: 4, cohort: "z",
+    no: 4, cohort: "z", sample: true,
     group: "○○과", author: "최○○",
     title: "수업 기록 정리 도구",
     topic: "수업 중 적은 메모를 붙여 넣으면 주제별로 묶어 정리해 줍니다.",
@@ -175,12 +175,12 @@ const ITEMS = [
 const VIDEOS = [
 
   /* 예시 ① 유튜브 링크 */
-  { title: "작품 시연 영상 예시", group: "○○컴퍼니", author: "김○○",
+  { sample: true, title: "작품 시연 영상 예시", group: "○○컴퍼니", author: "김○○",
     youtube: "https://youtu.be/XXXXXXXXXXX", file: "",
     desc: "작품 시연 장면을 담은 영상입니다." },
 
   /* 예시 ② 직접 올린 쇼츠 영상 — mp4 파일을 video/ 폴더에 두고 경로를 적으세요 */
-  { title: "쇼츠 예시 (직접 업로드)", group: "○○컴퍼니", author: "이○○",
+  { sample: true, title: "쇼츠 예시 (직접 업로드)", group: "○○컴퍼니", author: "이○○",
     youtube: "", file: "video/sample-shorts.mp4",
     desc: "저장소 video/ 폴더에 올린 영상을 바로 재생합니다." },
 

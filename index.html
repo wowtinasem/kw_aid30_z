@@ -523,6 +523,12 @@ const $ = id => document.getElementById(id);
 (function(){
   const AD = window.ADMIN_DATA;
   if (!AD) return;
+  /* 실제 등록이 시작되면 샘플(sample: true) 항목은 화면에서 제외합니다 */
+  if ((AD.works || []).length)
+    for (let i = ITEMS.length - 1; i >= 0; i--){ if (ITEMS[i].sample) ITEMS.splice(i, 1); }
+  if (typeof VIDEOS !== "undefined" && (AD.videos || []).length)
+    for (let i = VIDEOS.length - 1; i >= 0; i--){ if (VIDEOS[i].sample) VIDEOS.splice(i, 1); }
+  /* 등록 순서대로 번호를 매겨 첫 작품이 맨 앞에 옵니다 (번호는 화면에 표시하지 않음) */
   const base = ITEMS.filter(i => i.cohort === "z").reduce((m, i) => Math.max(m, i.no), 0);
   (AD.works || []).forEach((w, i) => ITEMS.push({
     no: base + i + 1, cohort: "z",

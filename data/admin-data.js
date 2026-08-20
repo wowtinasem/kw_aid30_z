@@ -11,7 +11,8 @@ window.ADMIN_DATA = {
       "topic": "",
       "usage": "",
       "prompt": "",
-      "emoji": "🎨"
+      "emoji": "🎨",
+      "image": "https://kyewon-vibe-coding-glossary.vercel.app/assets/og-vibe-coding.png"
     }
   ],
   "videos": []

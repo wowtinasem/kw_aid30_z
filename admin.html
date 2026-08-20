@@ -98,8 +98,8 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.85em;background:var(
       <div><label for="wGroup">소속 (회사·팀)</label><input type="text" id="wGroup"></div>
     </div>
     <label for="wTitle">작품명 *</label><input type="text" id="wTitle">
-    <label for="wApp">앱 링크</label><input type="url" id="wApp" placeholder="https://...">
-    <label for="wVideo">유튜브 링크 (썸네일 자동)</label><input type="url" id="wVideo" placeholder="https://youtu.be/...">
+    <label for="wApp">앱 링크 (해당 페이지의 오픈그래프 이미지가 썸네일이 됩니다)</label><input type="url" id="wApp" placeholder="https://...">
+    <label for="wVideo">유튜브 링크 (선택 — 오픈그래프가 없으면 유튜브 썸네일 사용)</label><input type="url" id="wVideo" placeholder="https://youtu.be/...">
     <div class="preview" id="wPreview"><img id="wPreviewImg" alt="썸네일 미리보기"></div>
     <label for="wTopic">작품 주제 (선택)</label><textarea id="wTopic"></textarea>
     <label for="wPrompt">어떻게 시켰나 — AI에게 시킨 말 (선택)</label><textarea id="wPrompt"></textarea>
@@ -256,6 +256,35 @@ function bindPreview(inputId, boxId, imgId){
 }
 bindPreview("wVideo", "wPreview", "wPreviewImg");
 bindPreview("vYoutube", "vPreview", "vPreviewImg");
+
+/* ---------- 앱 링크의 오픈그래프 이미지 추출 — 썸네일 = 오픈그래프 ----------
+   브라우저 보안(CORS) 때문에 공개 프록시를 거쳐 등록 시점에 한 번만 읽어 저장합니다 */
+async function fetchOgImage(url){
+  try {
+    const res = await fetch("https://api.allorigins.win/raw?url=" + encodeURIComponent(url),
+      { signal: AbortSignal.timeout(12000) });
+    if (!res.ok) return "";
+    const html = await res.text();
+    const m = html.match(/<meta[^>]+(?:property|name)=["'](?:og:image|twitter:image)["'][^>]*content=["']([^"']+)["']/i)
+          || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]*(?:property|name)=["'](?:og:image|twitter:image)["']/i);
+    return m ? new URL(m[1], url).href : "";
+  } catch { return ""; }
+}
+$("wApp").addEventListener("change", async () => {
+  const u = $("wApp").value.trim();
+  $("wApp").dataset.og = "";
+  if (!u) return;
+  setMsg("wMsg", "앱 페이지에서 오픈그래프 이미지를 찾는 중...", true);
+  const img = await fetchOgImage(u);
+  if (img){
+    $("wApp").dataset.og = img;
+    $("wPreviewImg").src = img;
+    $("wPreview").classList.add("show");
+    setMsg("wMsg", "오픈그래프 이미지를 찾았습니다 — 이 이미지가 썸네일로 저장됩니다.", true);
+  } else {
+    setMsg("wMsg", "오픈그래프 이미지를 찾지 못했습니다. 유튜브 링크가 있으면 그 썸네일을 씁니다.", false);
+  }
+});
 $("vFile").addEventListener("change", () => {
   const f = $("vFile").files[0];
   if (f){
@@ -276,11 +305,14 @@ $("wAdd").addEventListener("click", async () => {
   if (!w.author || !w.title){ setMsg("wMsg", "만든이와 작품명은 필수입니다.", false); return; }
   $("wAdd").disabled = true;
   try {
+    /* 썸네일 = 앱 페이지의 오픈그래프 이미지 (미리 찾아둔 값이 없으면 저장 시점에 시도) */
+    w.image = $("wApp").dataset.og || (w.app ? await fetchOgImage(w.app) : "");
     await loadData();                    /* 최신 상태 위에 추가 */
     DATA.works.push(w);
     await saveData(`admin: 작품 추가 — ${w.title}`);
     setMsg("wMsg", "저장했습니다. 사이트 반영까지 1~2분 걸립니다.", true);
     ["wAuthor","wGroup","wTitle","wApp","wVideo","wTopic","wPrompt"].forEach(id => $(id).value = "");
+    $("wApp").dataset.og = "";
     $("wPreview").classList.remove("show");
     renderLists();
   } catch (e){ setMsg("wMsg", "실패: " + e.message, false); }
