@@ -217,31 +217,28 @@ button{font-family:inherit;cursor:pointer}
   background:radial-gradient(circle,var(--halo-a) 0%,var(--halo-b) 45%,transparent 70%);
   filter:blur(6px);
 }
+/* 글자 자체가 투명한 유리 — 반투명 그라데이션 채움 + 옅은 유리 윤곽선 + 글로우 */
 .glyph{
-  display:inline-flex;align-items:center;justify-content:center;
-  width:56px;height:74px;border-radius:14px;
-  border:1px solid var(--petal-front-line);
-  background:linear-gradient(180deg,var(--petal-front-fill) 0%,rgba(255,255,255,.05) 72%);
-  backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.35), inset 0 -10px 26px var(--halo-a),
-             0 10px 34px rgba(8,18,40,.35);
-  font-family:var(--font-display);font-weight:900;font-size:2rem;
-  color:var(--on-brand);text-shadow:0 0 18px var(--beam-a);
+  font-family:var(--font-display);font-weight:900;
+  font-size:4.4rem;line-height:1;
+  background:linear-gradient(180deg,rgba(255,255,255,.6) 0%,rgba(255,255,255,.13) 55%,rgba(255,255,255,.32) 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  -webkit-text-stroke:1px var(--petal-front-line);
+  filter:drop-shadow(0 10px 22px rgba(8,18,40,.5)) drop-shadow(0 0 18px var(--beam-a));
   /* 개화 루프(7초): --dx 만큼 흩어진 채 피어오름 → 가운데로 모여 만남 → 유지 → 소멸 */
   --dx:0px; --d:0s; --rot:0deg;
   opacity:0;
   animation:glyphLoop 7s ease-in-out infinite;
   animation-delay:var(--d);
 }
-.glyph.dot{width:26px;height:40px;font-size:1.4rem;border-radius:9px;align-self:flex-end;margin-bottom:32px}
-.glyph.num{width:46px;height:62px;font-size:1.6rem;border-radius:12px}
+.glyph.num{font-size:3.2rem}
 .glyph.plus{
-  width:36px;height:36px;font-size:1.5rem;border-radius:50%;
-  align-self:flex-start;margin-top:44px;
-  color:var(--hero-accent-2-hi);
-  border-color:var(--petal-line);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.35), 0 0 22px var(--halo-a);
-  text-shadow:0 0 14px var(--hero-accent-2);
+  font-size:2.6rem;
+  align-self:flex-start;margin-top:56px;
+  background:linear-gradient(180deg,rgba(140,243,223,.85) 0%,rgba(94,234,212,.28) 60%,rgba(140,243,223,.55) 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  -webkit-text-stroke:1px var(--hero-accent-2);
+  filter:drop-shadow(0 0 18px var(--halo-a)) drop-shadow(0 6px 14px rgba(8,18,40,.4));
 }
 @keyframes glyphLoop{
   0%{opacity:0;transform:translate(calc(var(--dx) * 1.8), 52px) rotate(var(--rot)) scale(.6)}
@@ -447,13 +444,12 @@ footer .org{color:var(--on-brand);font-weight:700;font-size:.9rem}
       <canvas class="globe" id="globe"></canvas>
       <div class="aid-bloom">
         <span class="ripple r2"></span><span class="ripple r1"></span>
-        <span class="glyph"      style="--dx:-76px;--d:.15s;--rot:-10deg">A</span>
-        <span class="glyph"      style="--dx:-48px;--d:.3s;--rot:-6deg">I</span>
-        <span class="glyph dot"  style="--dx:-26px;--d:.45s;--rot:-3deg">.</span>
-        <span class="glyph"      style="--dx:-4px;--d:.6s;--rot:3deg">D</span>
-        <span class="glyph num"  style="--dx:36px;--d:.75s;--rot:6deg">3</span>
-        <span class="glyph num"  style="--dx:60px;--d:.9s;--rot:9deg">0</span>
-        <span class="glyph plus" style="--dx:86px;--d:1.05s;--rot:12deg">+</span>
+        <span class="glyph"      style="--dx:-68px;--d:.15s;--rot:-10deg">A</span>
+        <span class="glyph"      style="--dx:-42px;--d:.3s;--rot:-6deg">I</span>
+        <span class="glyph"      style="--dx:-14px;--d:.45s;--rot:3deg">D</span>
+        <span class="glyph num"  style="--dx:28px;--d:.6s;--rot:6deg">3</span>
+        <span class="glyph num"  style="--dx:52px;--d:.75s;--rot:9deg">0</span>
+        <span class="glyph plus" style="--dx:78px;--d:.9s;--rot:12deg">+</span>
       </div>
     </div>
   </div>
