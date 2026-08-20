@@ -60,6 +60,60 @@ button{font-family:inherit;cursor:pointer}
 .gov-bar .org img{height:30px;width:auto}
 .gov-bar .prog{color:var(--on-brand-muted);font-weight:600;letter-spacing:.08em;white-space:nowrap}
 
+/* ---------- 히어로 ---------- */
+.hero{
+  background:var(--brand-deep);color:var(--on-brand);
+  text-align:center;padding:60px 20px 52px;
+}
+.hero .eyebrow{
+  display:inline-block;font-size:.85rem;font-weight:700;
+  letter-spacing:.22em;color:var(--on-brand-muted);
+}
+.hero h1{
+  font-family:var(--font-display);
+  font-size:clamp(2.4rem,6vw,4.6rem);font-weight:700;
+  letter-spacing:-.03em;line-height:1.1;
+  margin:14px 0 18px;
+}
+.hero h1 .accent{color:var(--brand-tint)}  /* 강조 줄 (titleGlow) */
+.hero-sub{font-size:1rem;color:var(--on-brand-muted);max-width:600px;margin:0 auto}
+.hero-sub b{color:var(--on-brand);font-weight:700}
+
+/* 모션 1 — 제목 단어별 등장 (0.14s 간격) */
+.w{display:inline-block;opacity:0;transform:translateY(24px);
+  animation:rise .6s cubic-bezier(.2,.7,.3,1) both}
+@keyframes rise{to{opacity:1;transform:translateY(0)}}
+
+/* 모션 2 — 타이핑 카드. 문구는 ITEMS의 prompt·제목에서 생성 */
+.prompt-line{
+  max-width:560px;margin:28px auto 0;
+  background:var(--glass-bg);border:1px solid var(--glass-line);
+  border-radius:10px;padding:12px 18px;text-align:left;
+  font-size:.95rem;color:var(--on-brand);
+  display:flex;align-items:flex-start;gap:10px;
+}
+.prompt-line .mark{color:var(--on-brand-muted);font-weight:700}
+.prompt-line .typed{min-height:1.7em}
+.caret{display:inline-block;width:2px;height:1.05em;
+  margin-top:.35em;flex:none;
+  background:var(--on-brand);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+
+/* 감속 설정 — 연출을 최종 상태로 즉시 표시 */
+@media (prefers-reduced-motion: reduce){
+  .w{animation:none;opacity:1;transform:none}
+  .caret{animation:none}
+}
+
+/* ---------- 소개 스트립 ---------- */
+.stats{
+  background:var(--paper);border-bottom:1px solid var(--line);
+  display:flex;justify-content:center;align-items:center;
+  gap:8px 28px;flex-wrap:wrap;
+  padding:12px 20px;font-size:.9rem;color:var(--muted);
+}
+.stats b{color:var(--ink);font-weight:700;margin-right:4px}
+
 /* ---------- 푸터 ---------- */
 footer{
   background:var(--brand-deep);color:var(--on-brand-muted);
@@ -79,7 +133,16 @@ footer .org{color:var(--on-brand);font-weight:700;font-size:.9rem}
   <span class="prog" id="progSlot"></span>
 </div>
 
-<!-- ================= 히어로 (2회차) ================= -->
+<!-- ================= 히어로 ================= -->
+<header class="hero">
+  <p class="eyebrow" id="eyebrowSlot"></p>
+  <h1 id="titleSlot"></h1>
+  <p class="hero-sub" id="subSlot"></p>
+  <div class="prompt-line" aria-hidden="true"><span class="mark">＞</span><span class="typed" id="typeText"></span><span class="caret"></span></div>
+</header>
+
+<!-- ================= 소개 스트립 ================= -->
+<div class="stats" id="statsSlot"></div>
 
 <!-- ================= 작품 목록 (3회차) ================= -->
 <main class="works" id="works"></main>
@@ -110,6 +173,41 @@ const $ = id => document.getElementById(id);
     slot.textContent = SITE.orgName;
   }
   $("progSlot").textContent = SITE.programName;
+})();
+
+/* ---------- 감속 설정 ---------- */
+const REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ---------- 히어로 ---------- */
+$("eyebrowSlot").textContent = SITE.eyebrow;
+$("titleSlot").innerHTML =
+  SITE.titleWords.map((w, i) =>
+    `<span class="w" style="animation-delay:${(0.10 + i * 0.14).toFixed(2)}s">${w}</span>`
+  ).join(" ") +
+  `<br><span class="w accent" style="animation-delay:${(0.10 + SITE.titleWords.length * 0.14).toFixed(2)}s">${SITE.titleGlow}</span>`;
+$("subSlot").innerHTML = SITE.subHTML;
+
+/* ---------- 소개 스트립 ---------- */
+$("statsSlot").innerHTML =
+  SITE.stats.map(s => `<span><b>${s.value}</b>${s.label}</span>`).join("");
+
+/* ---------- 타이핑 카드 — 문구를 데이터에서 생성 (명세 5절 시그니처) ---------- */
+(function typing(){
+  const el = $("typeText");
+  const phrases = ITEMS
+    .map(it => (it.prompt || "").split("\n")[0].trim() || it.title)
+    .filter(Boolean);
+  if (!el || !phrases.length) return;
+  if (REDUCED) { el.textContent = phrases[0]; return; }   /* 최종 상태 즉시 표시 */
+  let pi = 0, ci = 0, del = false;
+  (function tick(){
+    const t = phrases[pi];
+    ci += del ? -1 : 1;
+    el.textContent = t.slice(0, ci);
+    if (!del && ci === t.length) { del = true; setTimeout(tick, 1700); return; }
+    if (del && ci === 0) { del = false; pi = (pi + 1) % phrases.length; }
+    setTimeout(tick, del ? 30 : 90);
+  })();
 })();
 
 /* ---------- 푸터 ---------- */
