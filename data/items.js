@@ -10,8 +10,10 @@ const SITE = {
   /* 상단 표시줄 */
   orgName:     "계원예술대학교",
   orgLogo:     "img/logo-kaywon.png",   // 왼쪽 — 계원예술대학교 평생교육원(수신재). "" 이면 orgName 텍스트
-  programName: "AID+30",
-  programLogo: "img/logo-aid30.png",    // 오른쪽 — AI·D 30+ 집중캠프. "" 이면 programName 텍스트
+  programName: "AI·D 30+ 집중캠프",
+  programLogo: "",                      // 이미지 대신 아래 programMark 텍스트 로고를 사용합니다
+  /* 오른쪽 상단 텍스트 로고 — 원본 이미지의 텍스트를 반전 색감으로 재구성 */
+  programMark: { main: "AI.D", sub1: "30<sup>+</sup>집중캠프", sub2: "INTENSIVE CAMP" },
 
   /* 히어로 */
   eyebrow:     "재직자 AI디지털 집중과정 · 작품 전시관",
