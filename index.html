@@ -41,6 +41,23 @@
   --glass-bg:          rgba(255,255,255,.07);
   --glass-line:        rgba(255,255,255,.22);
 
+  /* 히어로 연출 색 — 어두운 무대 위 빛 포인트 (부여 원형 참조) */
+  --hero-accent-1:    #7FB8FF;              /* 하늘빛 포인트 */
+  --hero-accent-2:    #5EEAD4;              /* 민트빛 포인트 */
+  --hero-accent-2-hi: #8CF3DF;              /* 민트 하이라이트 (연꽃 심) */
+  --hero-accent-3:    #EAF6FF;              /* 시머 하이라이트 */
+  --stage-dot:        rgba(140,180,255,.20);/* 점 격자 */
+  --beam-a:           rgba(90,160,255,.30); /* 빔 스윕 */
+  --beam-b:           rgba(94,234,212,.18);
+  --halo-a:           rgba(94,234,212,.16); /* 후광 */
+  --halo-b:           rgba(90,160,255,.10);
+  --petal-line:       rgba(185,220,255,.38);/* 글래스 연꽃 */
+  --petal-fill:       rgba(205,230,255,.16);
+  --petal-front-line: rgba(205,235,255,.5);
+  --petal-front-fill: rgba(215,238,255,.22);
+  --petal-glow:       rgba(90,160,255,.08);
+  --ripple-line:      rgba(150,195,255,.28);
+
   /* 타이포 — 웹폰트 없음, 시스템 폰트만 */
   --font-display: "Pretendard","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
   --font-body:    "Pretendard","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
@@ -67,49 +84,187 @@ button{font-family:inherit;cursor:pointer}
 .gov-bar .org img{height:30px;width:auto}
 .gov-bar .prog{color:var(--on-brand-muted);font-weight:600;letter-spacing:.08em;white-space:nowrap}
 
-/* ---------- 히어로 ---------- */
+/* ---------- 히어로 — 2단 구성: 왼쪽 카피 + 오른쪽 연출 무대 ---------- */
 .hero{
+  position:relative;overflow:hidden;
   background:var(--brand-deep);color:var(--on-brand);
-  text-align:center;padding:60px 20px 52px;
+  padding:56px 24px 48px;
 }
-.hero .eyebrow{
+/* 무대 배경: 점 격자 + 빔 스윕 */
+.stage{position:absolute;inset:0;z-index:1;pointer-events:none}
+.grid-dots{
+  position:absolute;inset:0;
+  background-image:radial-gradient(var(--stage-dot) 1px, transparent 1.4px);
+  background-size:26px 26px;
+  -webkit-mask-image:linear-gradient(180deg,rgba(0,0,0,.85),rgba(0,0,0,.3));
+  mask-image:linear-gradient(180deg,rgba(0,0,0,.85),rgba(0,0,0,.3));
+}
+.beam{
+  position:absolute;top:-45%;height:190%;width:32vw;min-width:300px;left:50%;
+  background:linear-gradient(90deg,transparent,var(--beam-a) 45%,var(--beam-b) 58%,transparent);
+  filter:blur(36px);mix-blend-mode:screen;
+  animation:sweep 28s linear infinite;
+}
+.beam.b2{width:14vw;min-width:160px;opacity:.65;animation-delay:-14s}
+@keyframes sweep{
+  from{transform:translateX(-92vw) rotate(14deg)}
+  to  {transform:translateX(92vw)  rotate(14deg)}
+}
+.hero-inner{
+  position:relative;z-index:2;
+  max-width:1080px;margin:0 auto;
+  display:grid;grid-template-columns:1.08fr .92fr;
+  align-items:center;gap:44px;
+  text-align:left;
+}
+.hero-copy{min-width:0}
+.eyebrow{
   display:inline-block;font-size:.85rem;font-weight:700;
-  letter-spacing:.22em;color:var(--on-brand-muted);
+  letter-spacing:.22em;color:var(--hero-accent-1);
 }
 .hero h1{
   font-family:var(--font-display);
   font-size:clamp(2.4rem,6vw,4.6rem);font-weight:700;
   letter-spacing:-.03em;line-height:1.1;
-  margin:14px 0 18px;
+  margin:12px 0 16px;
+  text-shadow:0 0 34px var(--halo-b);
 }
-.hero h1 .accent{color:var(--brand-tint)}  /* 강조 줄 (titleGlow) */
-.hero-sub{font-size:1rem;color:var(--on-brand-muted);max-width:600px;margin:0 auto}
+/* 강조 줄 — 그라데이션 글자 + 빛 훑기(시머) */
+.hero h1 .glow{
+  background:linear-gradient(110deg,var(--hero-accent-1) 18%,var(--hero-accent-2) 38%,var(--hero-accent-3) 50%,var(--hero-accent-2) 62%,var(--hero-accent-1) 82%);
+  background-size:230% 100%;
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  display:inline-block;opacity:0;transform:translateY(24px);
+  animation:rise .6s .38s cubic-bezier(.2,.7,.3,1) both,
+            shimmer 7s ease-in-out 1.6s infinite;
+}
+@keyframes shimmer{0%,100%{background-position:0% 0}50%{background-position:100% 0}}
+.hero-sub{font-size:1rem;color:var(--on-brand-muted);max-width:560px}
 .hero-sub b{color:var(--on-brand);font-weight:700}
 
-/* 모션 1 — 제목 단어별 등장 (0.14s 간격) */
+/* 모션 — 단어별 등장 · 요소 등장 */
 .w{display:inline-block;opacity:0;transform:translateY(24px);
   animation:rise .6s cubic-bezier(.2,.7,.3,1) both}
+.fx{opacity:0;transform:translateY(14px);
+  animation:rise .6s .7s cubic-bezier(.2,.7,.3,1) both}
 @keyframes rise{to{opacity:1;transform:translateY(0)}}
+@keyframes floatY{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
 
-/* 모션 2 — 타이핑 카드. 문구는 ITEMS의 prompt·제목에서 생성 */
+/* 타이핑 카드 — 문구는 ITEMS의 prompt·제목에서 생성 */
 .prompt-line{
-  max-width:560px;margin:28px auto 0;
-  background:var(--glass-bg);border:1px solid var(--glass-line);
-  border-radius:10px;padding:12px 18px;text-align:left;
+  max-width:520px;margin:24px 0 0;
+  background:var(--glass-bg);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border:1px solid var(--glass-line);
+  border-radius:12px;padding:13px 18px;text-align:left;
   font-size:.95rem;color:var(--on-brand);
   display:flex;align-items:flex-start;gap:10px;
+  opacity:0;
+  animation:rise .6s .8s cubic-bezier(.2,.7,.3,1) both,
+            floatY 6s ease-in-out 1.8s infinite;
 }
-.prompt-line .mark{color:var(--on-brand-muted);font-weight:700}
+.prompt-line .mark{color:var(--hero-accent-2);font-weight:900}
 .prompt-line .typed{min-height:1.7em}
 .caret{display:inline-block;width:2px;height:1.05em;
   margin-top:.35em;flex:none;
-  background:var(--on-brand);animation:blink 1s steps(1) infinite}
+  background:var(--hero-accent-1);animation:blink 1s steps(1) infinite}
 @keyframes blink{50%{opacity:0}}
 
-/* 감속 설정 — 연출을 최종 상태로 즉시 표시 */
+/* ---------- 오른쪽 연출: 디지털 닷 스피어 + 글래스 연꽃 ---------- */
+.hero-visual{position:relative;display:flex;justify-content:center;align-items:flex-end;min-height:280px}
+.globe{
+  position:absolute;left:50%;top:46%;
+  width:380px;height:380px;
+  transform:translate(-50%,-50%);
+  pointer-events:none;opacity:.9;
+}
+.lotus{
+  position:relative;z-index:1;width:330px;height:255px;
+  animation:floatY 8s ease-in-out 2s infinite;
+}
+.lotus::before{ /* 후광 */
+  content:"";position:absolute;left:50%;top:52%;width:300px;height:300px;
+  transform:translate(-50%,-50%);
+  background:radial-gradient(circle,var(--halo-a) 0%,var(--halo-b) 45%,transparent 70%);
+  filter:blur(6px);
+}
+.petal{
+  position:absolute;left:50%;bottom:52px;
+  transform-origin:50% 100%;
+  border:1px solid var(--petal-line);
+  background:linear-gradient(180deg,var(--petal-fill) 0%,rgba(255,255,255,.03) 70%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.28), inset 0 -8px 22px var(--petal-glow);
+  border-radius:50% 50% 46% 46% / 78% 78% 24% 24%;
+  /* 반복 개화(5초 주기): 피어남 → 만개 유지 → 오므림 → 다시 개화 */
+  --r:0deg; --d:.8s; --po:1;
+  opacity:0;
+  animation:bloomLoop 5s ease-in-out infinite;
+  animation-delay:var(--d);
+}
+@keyframes bloomLoop{
+  0%{transform:rotate(calc(var(--r) * .12)) scale(.5,.3);opacity:0}
+  12%{opacity:var(--po)}
+  20%,80%{transform:rotate(var(--r)) scale(1,1);opacity:var(--po)}
+  93%,100%{transform:rotate(calc(var(--r) * .12)) scale(.5,.3);opacity:0}
+}
+.pb{width:84px;height:138px;margin-left:-42px;--po:.75}
+.p1{--r:-52deg;--d:.75s} .p2{--r:-19deg;--d:.95s}
+.p3{--r:19deg;--d:.95s}  .p4{--r:52deg;--d:.75s}
+.pf{
+  width:96px;height:186px;margin-left:-48px;
+  background:linear-gradient(180deg,var(--petal-front-fill) 0%,rgba(255,255,255,.05) 72%);
+  border-color:var(--petal-front-line);
+  backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.35), inset 0 -10px 26px var(--halo-a),
+             0 10px 34px rgba(8,18,40,.35);
+}
+.p5{--r:-26deg;--d:1.15s;height:168px}
+.p6{--r:0deg;--d:1.35s}
+.p7{--r:26deg;--d:1.15s;height:168px}
+.core{
+  position:absolute;left:50%;bottom:64px;width:26px;height:26px;
+  margin-left:-13px;border-radius:50%;
+  background:radial-gradient(circle,var(--hero-accent-2-hi) 0%,var(--hero-accent-2) 45%,transparent 75%);
+  filter:blur(1px);opacity:0;
+  animation:coreLoop 5s ease-in-out infinite;
+  animation-delay:1.35s;
+}
+@keyframes coreLoop{
+  0%,17%{opacity:0;transform:scale(.2)}
+  26%{opacity:.75;transform:scale(1)}
+  50%{opacity:1;transform:scale(1.16)}
+  78%{opacity:.75;transform:scale(1)}
+  91%,100%{opacity:0;transform:scale(.2)}
+}
+.ripple{
+  position:absolute;left:50%;border:1px solid var(--ripple-line);
+  border-radius:50%;transform:translateX(-50%) scaleY(.32);
+  opacity:0;--o:1;
+  animation:rippleIn 1s 2s ease both;
+}
+@keyframes rippleIn{to{opacity:var(--o)}}
+.r1{bottom:22px;width:220px;height:52px}
+.r2{bottom:12px;width:300px;height:64px;--o:.5}
+
+@media (max-width:900px){
+  .hero-inner{grid-template-columns:1fr;text-align:center;gap:10px}
+  .hero-sub{margin:0 auto}
+  .prompt-line{margin:24px auto 0}
+  .hero-visual{margin-top:22px;min-height:0}
+  .lotus{transform:scale(.72);transform-origin:bottom center;margin-bottom:-30px;animation:none}
+  .globe{width:340px;height:340px}
+}
+
+/* 감속 설정 — 모든 연출을 최종 상태로 즉시 표시 */
 @media (prefers-reduced-motion: reduce){
-  .w{animation:none;opacity:1;transform:none}
+  .w,.fx,.hero h1 .glow{animation:none;opacity:1;transform:none}
   .caret{animation:none}
+  .beam{animation:none}
+  .prompt-line{animation:none;opacity:1}
+  .lotus{animation:none}
+  .petal{animation:none;opacity:var(--po);transform:rotate(var(--r))}
+  .core{animation:none;opacity:1;transform:scale(1)}
+  .ripple{animation:none;opacity:var(--o)}
 }
 
 /* ---------- 소개 스트립 ---------- */
@@ -259,10 +414,28 @@ footer .org{color:var(--on-brand);font-weight:700;font-size:.9rem}
 
 <!-- ================= 히어로 ================= -->
 <header class="hero">
-  <p class="eyebrow" id="eyebrowSlot"></p>
-  <h1 id="titleSlot"></h1>
-  <p class="hero-sub" id="subSlot"></p>
-  <div class="prompt-line" aria-hidden="true"><span class="mark">＞</span><span class="typed" id="typeText"></span><span class="caret"></span></div>
+  <div class="stage" aria-hidden="true">
+    <div class="grid-dots"></div>
+    <div class="beam b1"></div>
+    <div class="beam b2"></div>
+  </div>
+  <div class="hero-inner">
+    <div class="hero-copy">
+      <p class="eyebrow" id="eyebrowSlot"></p>
+      <h1 id="titleSlot"></h1>
+      <p class="hero-sub" id="subSlot"></p>
+      <div class="prompt-line" aria-hidden="true"><span class="mark">＞</span><span class="typed" id="typeText"></span><span class="caret"></span></div>
+    </div>
+    <div class="hero-visual fx" aria-hidden="true">
+      <canvas class="globe" id="globe"></canvas>
+      <div class="lotus">
+        <span class="ripple r2"></span><span class="ripple r1"></span>
+        <i class="petal pb p1"></i><i class="petal pb p2"></i><i class="petal pb p3"></i><i class="petal pb p4"></i>
+        <i class="petal pf p5"></i><i class="petal pf p7"></i><i class="petal pf p6"></i>
+        <b class="core"></b>
+      </div>
+    </div>
+  </div>
 </header>
 
 <!-- ================= 소개 스트립 ================= -->
@@ -332,7 +505,7 @@ $("titleSlot").innerHTML =
   SITE.titleWords.map((w, i) =>
     `<span class="w" style="animation-delay:${(0.10 + i * 0.14).toFixed(2)}s">${w}</span>`
   ).join(" ") +
-  `<br><span class="w accent" style="animation-delay:${(0.10 + SITE.titleWords.length * 0.14).toFixed(2)}s">${SITE.titleGlow}</span>`;
+  `<br><span class="glow">${SITE.titleGlow}</span>`;
 $("subSlot").innerHTML = SITE.subHTML;
 
 /* ---------- 소개 스트립 ---------- */
@@ -356,6 +529,74 @@ $("statsSlot").innerHTML =
     if (del && ci === 0) { del = false; pi = (pi + 1) % phrases.length; }
     setTimeout(tick, del ? 30 : 90);
   })();
+})();
+
+/* ---------- 디지털 닷 스피어 — 점으로 된 구가 연꽃 뒤에서 천천히 자전 ---------- */
+(function(){
+  const cv = $("globe");
+  if (!cv) return;
+  const ctx = cv.getContext("2d");
+  const DPR = Math.min(window.devicePixelRatio || 1, 1.5);
+  /* 색은 :root 토큰에서 읽어 옵니다 */
+  const rgbOf = name => {
+    const h = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    const n = parseInt(h.slice(1), 16);
+    return `${(n >> 16) & 255},${(n >> 8) & 255},${n & 255}`;
+  };
+  const BLUE = rgbOf("--hero-accent-1"), TEAL = rgbOf("--hero-accent-2");
+  let raf = null, th = 0;
+
+  const N = 720, TILT = -0.21, SPEED = 0.0016;
+  const GA = Math.PI * (3 - Math.sqrt(5));
+  const pts = [];
+  for (let i = 0; i < N; i++){
+    const y = 1 - (i / (N - 1)) * 2;
+    const r = Math.sqrt(1 - y * y);
+    const a = GA * i;
+    pts.push({ x: Math.cos(a) * r, y, z: Math.sin(a) * r,
+               tw: Math.random() * 6.283, teal: i % 9 === 0 });
+  }
+  function size(){
+    const w = cv.clientWidth, h = cv.clientHeight;
+    cv.width = w * DPR; cv.height = h * DPR;
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  }
+  function frame(){
+    const w = cv.clientWidth, h = cv.clientHeight;
+    const cx = w / 2, cy = h / 2, R = w * 0.42;
+    ctx.clearRect(0, 0, w, h);
+    const halo = ctx.createRadialGradient(cx, cy, R * .55, cx, cy, R * 1.25);
+    halo.addColorStop(0, `rgba(${BLUE},0)`);
+    halo.addColorStop(.75, `rgba(${BLUE},.10)`);
+    halo.addColorStop(1, `rgba(${BLUE},0)`);
+    ctx.fillStyle = halo;
+    ctx.fillRect(0, 0, w, h);
+    const cosT = Math.cos(th), sinT = Math.sin(th);
+    const cosK = Math.cos(TILT), sinK = Math.sin(TILT);
+    const t = performance.now() * 0.001;
+    for (const p of pts){
+      const x1 = p.x * cosT + p.z * sinT;
+      const z1 = -p.x * sinT + p.z * cosT;
+      const x2 = x1 * cosK - p.y * sinK;
+      const y2 = x1 * sinK + p.y * cosK;
+      const sx = cx + x2 * R, sy = cy + y2 * R;
+      const depth = (z1 + 1) / 2;
+      const twk = REDUCED ? 1 : .85 + Math.sin(t * 1.4 + p.tw) * .15;
+      const alpha = ((0.10 + depth * 0.75) * twk).toFixed(3);
+      ctx.fillStyle = `rgba(${p.teal ? TEAL : BLUE},${alpha})`;
+      ctx.beginPath();
+      ctx.arc(sx, sy, 0.7 + depth * 1.25, 0, 6.283);
+      ctx.fill();
+    }
+  }
+  function step(){ th += SPEED; frame(); raf = requestAnimationFrame(step); }
+  function start(){ if (!raf && !REDUCED) raf = requestAnimationFrame(step); }
+  function stop(){ cancelAnimationFrame(raf); raf = null; }
+  window.addEventListener("resize", () => { size(); if (REDUCED) frame(); });
+  document.addEventListener("visibilitychange", () => document.hidden ? stop() : start());
+  size();
+  if (REDUCED) frame();   /* 감속 설정: 자전 없이 정지 화면 한 장 */
+  else start();
 })();
 
 /* ============================================================
