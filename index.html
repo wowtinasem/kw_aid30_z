@@ -185,10 +185,11 @@ body.modal-open{overflow:hidden}
 }
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 @keyframes placardIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
-/* 감속 설정 — 이동 없이 페이드만 */
+/* 감속 설정·자동 전시 — 이동 없이 페이드만 */
 @media (prefers-reduced-motion: reduce){
   .placard{animation:fadeIn .18s ease}
 }
+.overlay.auto .placard{animation:fadeIn .28s ease}
 .placard-head{
   display:flex;justify-content:space-between;align-items:center;
   padding:8px 8px 8px 22px;border-bottom:1px solid var(--line);
@@ -509,9 +510,10 @@ function specRow(label, text, mono){
   return row;
 }
 
-function openPlacard(item){
+function openPlacard(item, opts){
+  const silent = opts && opts.silent;   /* 자동 전시 모드: 포커스를 건드리지 않음 */
   openItem = item;
-  lastFocus = document.activeElement;
+  if (!silent) lastFocus = document.activeElement;
   $("pBadge").textContent = SITE.badge(item.cohort, item.no);
   $("pTitle").textContent = item.title;
   $("pArtist").innerHTML = SITE.artistLine(item);
@@ -539,15 +541,15 @@ function openPlacard(item){
   });
   overlay.classList.add("show");
   document.body.classList.add("modal-open");
-  $("pClose").focus();
+  if (!silent) $("pClose").focus();
 }
 
-function closePlacard(){
+function closePlacard(opts){
   if (!openItem) return;
   openItem = null;
   overlay.classList.remove("show");
   document.body.classList.remove("modal-open");
-  if (lastFocus && document.contains(lastFocus)) lastFocus.focus();
+  if (!(opts && opts.silent) && lastFocus && document.contains(lastFocus)) lastFocus.focus();
 }
 
 $("pClose").addEventListener("click", requestClose);
@@ -591,6 +593,49 @@ function syncFromHash(){
 }
 window.addEventListener("hashchange", syncFromHash);
 syncFromHash();
+
+/* ---------- 자동 전시 모드 — 행사장 대형 화면 대응 ----------
+   무조작 idleMs 경과 → 앱 링크가 있는 작품만 순환하며 모달을 자동으로 엽니다.
+   마우스·키보드·터치·스크롤 중 무엇이든 감지되면 즉시 해제합니다.
+   감속 설정과 무관하게 동작하되 전환은 페이드만 씁니다.
+   순환 대상이 5개 미만이면 켜지 않습니다 (명세 8절). */
+(function autoMode(){
+  const linked = SORTED.filter(it => it.links.app);
+  if (linked.length < 5) return;
+  let idleTimer = null, stepTimer = null, on = false, idx = 0;
+
+  function start(){
+    if (on || openItem) return;   /* 이미 열려 있는 카드 위에 겹치지 않음 */
+    on = true;
+    overlay.classList.add("auto");
+    (function cycle(){
+      if (!on) return;
+      openPlacard(linked[idx % linked.length], { silent: true });   /* 주소는 바꾸지 않습니다 */
+      idx++;
+      stepTimer = setTimeout(() => {
+        if (!on) return;
+        closePlacard({ silent: true });
+        stepTimer = setTimeout(cycle, SITE.gapMs);
+      }, SITE.showMs);
+    })();
+  }
+  function stop(){
+    clearTimeout(stepTimer);
+    if (on){
+      on = false;
+      overlay.classList.remove("auto");
+      closePlacard({ silent: true });
+    }
+    resetIdle();
+  }
+  function resetIdle(){
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(start, SITE.idleMs);
+  }
+  ["pointerdown", "pointermove", "keydown", "wheel", "touchstart", "scroll"]
+    .forEach(ev => window.addEventListener(ev, stop, { passive: true }));
+  resetIdle();
+})();
 
 /* ---------- 푸터 ---------- */
 $("footerSlot").innerHTML = SITE.footerLines.map(l => `<div>${l}</div>`).join("");
