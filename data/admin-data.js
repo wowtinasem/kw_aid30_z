@@ -15,5 +15,14 @@ window.ADMIN_DATA = {
       "image": "https://kyewon-vibe-coding-glossary.vercel.app/assets/og-vibe-coding.png"
     }
   ],
-  "videos": []
+  "videos": [
+    {
+      "title": "당신의 리클라이너",
+      "author": "유경화",
+      "group": "마인드캔버스",
+      "youtube": "https://youtu.be/wOmW6o1dlN4",
+      "file": "",
+      "desc": "AI로 제작한 광고샘플 영상입니다."
+    }
+  ]
 };
