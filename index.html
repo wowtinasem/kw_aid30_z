@@ -38,25 +38,14 @@
   --shadow-card-hover: 0 12px 28px rgba(23,23,26,.14);
   --shadow-modal:      0 28px 80px rgba(0,0,0,.35);
   --overlay-bg:        rgba(14,23,38,.55);
-  --glass-bg:          rgba(255,255,255,.07);
-  --glass-line:        rgba(255,255,255,.22);
+  --panel-line:        rgba(255,255,255,.22);
 
-  /* 히어로 연출 색 — 어두운 무대 위 빛 포인트 (부여 원형 참조) */
-  --hero-accent-1:    #7FB8FF;              /* 하늘빛 포인트 */
-  --hero-accent-2:    #5EEAD4;              /* 민트빛 포인트 */
-  --hero-accent-2-hi: #8CF3DF;              /* 민트 하이라이트 (연꽃 심) */
-  --hero-accent-3:    #EAF6FF;              /* 시머 하이라이트 */
-  --stage-dot:        rgba(140,180,255,.20);/* 점 격자 */
-  --beam-a:           rgba(90,160,255,.30); /* 빔 스윕 */
-  --beam-b:           rgba(94,234,212,.18);
-  --halo-a:           rgba(94,234,212,.16); /* 후광 */
-  --halo-b:           rgba(90,160,255,.10);
-  --petal-line:       rgba(185,220,255,.38);/* 글래스 연꽃 */
-  --petal-fill:       rgba(205,230,255,.16);
-  --petal-front-line: rgba(205,235,255,.5);
-  --petal-front-fill: rgba(215,238,255,.22);
-  --petal-glow:       rgba(90,160,255,.08);
-  --ripple-line:      rgba(150,195,255,.28);
+  /* 히어로 연출 색 */
+  --hero-accent-1: #7FB8FF;              /* 하늘빛 포인트 (작은 제목·캐럿) */
+  --hero-accent-2: #5EEAD4;              /* 민트빛 포인트 (프롬프트 마크) */
+  --stage-dot:     rgba(140,180,255,.20);/* 점 격자 */
+  --beam-a:        rgba(90,160,255,.30); /* 빔 스윕 */
+  --beam-b:        rgba(94,234,212,.18);
 
   /* 타이포 — 웹폰트 없음, 시스템 폰트만 */
   --font-display: "Pretendard","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
@@ -113,7 +102,7 @@ button{font-family:inherit;cursor:pointer}
 .hero-inner{
   position:relative;z-index:2;
   max-width:1080px;margin:0 auto;
-  display:grid;grid-template-columns:1.08fr .92fr;
+  display:grid;grid-template-columns:1.05fr .95fr;
   align-items:center;gap:44px;
   text-align:left;
 }
@@ -127,35 +116,27 @@ button{font-family:inherit;cursor:pointer}
   font-size:clamp(2.4rem,6vw,4.6rem);font-weight:700;
   letter-spacing:-.03em;line-height:1.1;
   margin:12px 0 16px;
-  text-shadow:0 0 34px var(--halo-b);
 }
-/* 강조 줄 — 그라데이션 글자 + 빛 훑기(시머) */
+/* 강조 줄 — 브랜드 색 단색 (공식 색 확정 시 :root의 --brand-tint 교체) */
 .hero h1 .glow{
-  background:linear-gradient(110deg,var(--hero-accent-1) 18%,var(--hero-accent-2) 38%,var(--hero-accent-3) 50%,var(--hero-accent-2) 62%,var(--hero-accent-1) 82%);
-  background-size:230% 100%;
-  -webkit-background-clip:text;background-clip:text;color:transparent;
+  color:var(--brand-tint);
   display:inline-block;opacity:0;transform:translateY(24px);
-  animation:rise .6s .38s cubic-bezier(.2,.7,.3,1) both,
-            shimmer 7s ease-in-out 1.6s infinite;
+  animation:rise .6s .38s cubic-bezier(.2,.7,.3,1) both;
 }
-@keyframes shimmer{0%,100%{background-position:0% 0}50%{background-position:100% 0}}
 .hero-sub{font-size:1rem;color:var(--on-brand-muted);max-width:560px}
 .hero-sub b{color:var(--on-brand);font-weight:700}
 
-/* 모션 — 단어별 등장 · 요소 등장 */
+/* 모션 — 단어별 등장 */
 .w{display:inline-block;opacity:0;transform:translateY(24px);
   animation:rise .6s cubic-bezier(.2,.7,.3,1) both}
-.fx{opacity:0;transform:translateY(14px);
-  animation:rise .6s .7s cubic-bezier(.2,.7,.3,1) both}
 @keyframes rise{to{opacity:1;transform:translateY(0)}}
 @keyframes floatY{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
 
 /* 타이핑 카드 — 문구는 ITEMS의 prompt·제목에서 생성 */
 .prompt-line{
   max-width:520px;margin:24px 0 0;
-  background:var(--glass-bg);
-  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-  border:1px solid var(--glass-line);
+  background:var(--brand);
+  border:1px solid var(--panel-line);
   border-radius:12px;padding:13px 18px;text-align:left;
   font-size:.95rem;color:var(--on-brand);
   display:flex;align-items:flex-start;gap:10px;
@@ -170,111 +151,64 @@ button{font-family:inherit;cursor:pointer}
   background:var(--hero-accent-1);animation:blink 1s steps(1) infinite}
 @keyframes blink{50%{opacity:0}}
 
-/* ---------- 오른쪽 연출: 디지털 닷 스피어 + 글래스 연꽃 ---------- */
-.hero-visual{position:relative;display:flex;justify-content:center;align-items:flex-end;min-height:280px}
-.globe{
-  position:absolute;left:50%;top:46%;
-  width:380px;height:380px;
-  transform:translate(-50%,-50%);
-  pointer-events:none;opacity:.9;
+/* ---------- 오른쪽 작품 무대 — 말(타이핑) → 결과(작품) ---------- */
+.hero-visual{min-width:0;display:flex;flex-direction:column;gap:10px}
+.stage-frame{
+  position:relative;width:100%;aspect-ratio:16/9;
+  background:var(--brand);
+  border:1px solid var(--panel-line);border-radius:var(--radius);
+  overflow:hidden;
 }
-.lotus{
-  position:relative;z-index:1;width:330px;height:255px;
-  animation:floatY 8s ease-in-out 2s infinite;
-}
-.lotus::before{ /* 후광 */
-  content:"";position:absolute;left:50%;top:52%;width:300px;height:300px;
-  transform:translate(-50%,-50%);
-  background:radial-gradient(circle,var(--halo-a) 0%,var(--halo-b) 45%,transparent 70%);
-  filter:blur(6px);
-}
-.petal{
-  position:absolute;left:50%;bottom:52px;
-  transform-origin:50% 100%;
-  border:1px solid var(--petal-line);
-  background:linear-gradient(180deg,var(--petal-fill) 0%,rgba(255,255,255,.03) 70%);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.28), inset 0 -8px 22px var(--petal-glow);
-  border-radius:50% 50% 46% 46% / 78% 78% 24% 24%;
-  /* 반복 개화(5초 주기): 피어남 → 만개 유지 → 오므림 → 다시 개화 */
-  --r:0deg; --d:.8s; --po:1;
+.stage-dots{position:absolute;inset:0}
+.stage-dot{
+  position:absolute;width:6px;height:6px;margin:-3px 0 0 -3px;
+  border-radius:50%;background:var(--hero-accent-1);
   opacity:0;
-  animation:bloomLoop 5s ease-in-out infinite;
-  animation-delay:var(--d);
+  transition:left .6s cubic-bezier(0,0,.2,1), top .6s cubic-bezier(0,0,.2,1), opacity .6s ease-out;
 }
-@keyframes bloomLoop{
-  0%{transform:rotate(calc(var(--r) * .12)) scale(.5,.3);opacity:0}
-  12%{opacity:var(--po)}
-  20%,80%{transform:rotate(var(--r)) scale(1,1);opacity:var(--po)}
-  93%,100%{transform:rotate(calc(var(--r) * .12)) scale(.5,.3);opacity:0}
+.stage-shot{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  opacity:0;transition:opacity .5s ease;
 }
-.pb{width:84px;height:138px;margin-left:-42px;--po:.75}
-.p1{--r:-52deg;--d:.75s} .p2{--r:-19deg;--d:.95s}
-.p3{--r:19deg;--d:.95s}  .p4{--r:52deg;--d:.75s}
-.pf{
-  width:96px;height:186px;margin-left:-48px;
-  background:linear-gradient(180deg,var(--petal-front-fill) 0%,rgba(255,255,255,.05) 72%);
-  border-color:var(--petal-front-line);
-  backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.35), inset 0 -10px 26px var(--halo-a),
-             0 10px 34px rgba(8,18,40,.35);
+.stage-emoji{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:56px;opacity:0;transition:opacity .5s ease;
 }
-.p5{--r:-26deg;--d:1.15s;height:168px}
-.p6{--r:0deg;--d:1.35s}
-.p7{--r:26deg;--d:1.15s;height:168px}
-.core{
-  position:absolute;left:50%;bottom:64px;width:26px;height:26px;
-  margin-left:-13px;border-radius:50%;
-  background:radial-gradient(circle,var(--hero-accent-2-hi) 0%,var(--hero-accent-2) 45%,transparent 75%);
-  filter:blur(1px);opacity:0;
-  animation:coreLoop 5s ease-in-out infinite;
-  animation-delay:1.35s;
+.stage-shot.show,.stage-emoji.show{opacity:1}
+.stage-caption{
+  display:flex;align-items:baseline;gap:10px;min-height:1.7em;
+  opacity:0;transition:opacity .5s ease;
 }
-@keyframes coreLoop{
-  0%,17%{opacity:0;transform:scale(.2)}
-  26%{opacity:.75;transform:scale(1)}
-  50%{opacity:1;transform:scale(1.16)}
-  78%{opacity:.75;transform:scale(1)}
-  91%,100%{opacity:0;transform:scale(.2)}
-}
-.ripple{
-  position:absolute;left:50%;border:1px solid var(--ripple-line);
-  border-radius:50%;transform:translateX(-50%) scaleY(.32);
-  opacity:0;--o:1;
-  animation:rippleIn 1s 2s ease both;
-}
-@keyframes rippleIn{to{opacity:var(--o)}}
-.r1{bottom:22px;width:220px;height:52px}
-.r2{bottom:12px;width:300px;height:64px;--o:.5}
+.stage-caption.show{opacity:1}
+.stage-title{font-weight:600;font-size:1rem;color:var(--on-brand)}
+.stage-by{font-size:.85rem;color:var(--on-brand-muted)}
 
 @media (max-width:900px){
   .hero-inner{grid-template-columns:1fr;text-align:center;gap:10px}
   .hero-sub{margin:0 auto}
   .prompt-line{margin:24px auto 0}
-  .hero-visual{margin-top:22px;min-height:0}
-  .lotus{transform:scale(.72);transform-origin:bottom center;margin-bottom:-30px;animation:none}
-  .globe{width:340px;height:340px}
+  .hero-visual{margin-top:24px;max-width:520px;width:100%;justify-self:center}
+  .stage-caption{justify-content:center}
 }
 
-/* 감속 설정 — 모든 연출을 최종 상태로 즉시 표시 */
+/* 감속 설정 — 연출을 최종 상태로 즉시 표시 (무대는 첫 작품 고정) */
 @media (prefers-reduced-motion: reduce){
-  .w,.fx,.hero h1 .glow{animation:none;opacity:1;transform:none}
+  .w,.hero h1 .glow{animation:none;opacity:1;transform:none}
   .caret{animation:none}
   .beam{animation:none}
   .prompt-line{animation:none;opacity:1}
-  .lotus{animation:none}
-  .petal{animation:none;opacity:var(--po);transform:rotate(var(--r))}
-  .core{animation:none;opacity:1;transform:scale(1)}
-  .ripple{animation:none;opacity:var(--o)}
+  .stage-dot,.stage-shot,.stage-emoji,.stage-caption{transition:none}
 }
 
-/* ---------- 소개 스트립 ---------- */
+/* ---------- 소개 스트립 — 히어로 하단 어두운 한 줄 (흰 갤러리와의 경계) ---------- */
 .stats{
-  background:var(--paper);border-bottom:1px solid var(--line);
+  background:var(--brand);color:var(--on-brand-muted);
+  border-top:1px solid var(--panel-line);
   display:flex;justify-content:center;align-items:center;
   gap:8px 28px;flex-wrap:wrap;
-  padding:12px 20px;font-size:.9rem;color:var(--muted);
+  padding:12px 20px;font-size:.9rem;
 }
-.stats b{color:var(--ink);font-weight:700;margin-right:4px}
+.stats b{color:var(--on-brand);font-weight:700;margin-right:4px}
 
 /* ---------- 작품 목록 ---------- */
 .works{max-width:1200px;width:100%;margin:0 auto;padding:0 20px 64px}
@@ -426,14 +360,13 @@ footer .org{color:var(--on-brand);font-weight:700;font-size:.9rem}
       <p class="hero-sub" id="subSlot"></p>
       <div class="prompt-line" aria-hidden="true"><span class="mark">＞</span><span class="typed" id="typeText"></span><span class="caret"></span></div>
     </div>
-    <div class="hero-visual fx" aria-hidden="true">
-      <canvas class="globe" id="globe"></canvas>
-      <div class="lotus">
-        <span class="ripple r2"></span><span class="ripple r1"></span>
-        <i class="petal pb p1"></i><i class="petal pb p2"></i><i class="petal pb p3"></i><i class="petal pb p4"></i>
-        <i class="petal pf p5"></i><i class="petal pf p7"></i><i class="petal pf p6"></i>
-        <b class="core"></b>
+    <div class="hero-visual" aria-hidden="true">
+      <div class="stage-frame">
+        <div class="stage-dots" id="stageDots"></div>
+        <img class="stage-shot" id="stageShot" alt="">
+        <span class="stage-emoji" id="stageEmoji"></span>
       </div>
+      <p class="stage-caption" id="stageCaption"><span class="stage-title" id="stageTitle"></span><span class="stage-by" id="stageBy"></span></p>
     </div>
   </div>
 </header>
@@ -508,95 +441,17 @@ $("titleSlot").innerHTML =
   `<br><span class="glow">${SITE.titleGlow}</span>`;
 $("subSlot").innerHTML = SITE.subHTML;
 
-/* ---------- 소개 스트립 ---------- */
-$("statsSlot").innerHTML =
-  SITE.stats.map(s => `<span><b>${s.value}</b>${s.label}</span>`).join("");
-
-/* ---------- 타이핑 카드 — 문구를 데이터에서 생성 (명세 5절 시그니처) ---------- */
-(function typing(){
-  const el = $("typeText");
-  const phrases = ITEMS
-    .map(it => (it.prompt || "").split("\n")[0].trim() || it.title)
-    .filter(Boolean);
-  if (!el || !phrases.length) return;
-  if (REDUCED) { el.textContent = phrases[0]; return; }   /* 최종 상태 즉시 표시 */
-  let pi = 0, ci = 0, del = false;
-  (function tick(){
-    const t = phrases[pi];
-    ci += del ? -1 : 1;
-    el.textContent = t.slice(0, ci);
-    if (!del && ci === t.length) { del = true; setTimeout(tick, 1700); return; }
-    if (del && ci === 0) { del = false; pi = (pi + 1) % phrases.length; }
-    setTimeout(tick, del ? 30 : 90);
-  })();
-})();
-
-/* ---------- 디지털 닷 스피어 — 점으로 된 구가 연꽃 뒤에서 천천히 자전 ---------- */
+/* ---------- 소개 스트립 — 숫자는 데이터에서 계산 ---------- */
 (function(){
-  const cv = $("globe");
-  if (!cv) return;
-  const ctx = cv.getContext("2d");
-  const DPR = Math.min(window.devicePixelRatio || 1, 1.5);
-  /* 색은 :root 토큰에서 읽어 옵니다 */
-  const rgbOf = name => {
-    const h = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-    const n = parseInt(h.slice(1), 16);
-    return `${(n >> 16) & 255},${(n >> 8) & 255},${n & 255}`;
-  };
-  const BLUE = rgbOf("--hero-accent-1"), TEAL = rgbOf("--hero-accent-2");
-  let raf = null, th = 0;
-
-  const N = 720, TILT = -0.21, SPEED = 0.0016;
-  const GA = Math.PI * (3 - Math.sqrt(5));
-  const pts = [];
-  for (let i = 0; i < N; i++){
-    const y = 1 - (i / (N - 1)) * 2;
-    const r = Math.sqrt(1 - y * y);
-    const a = GA * i;
-    pts.push({ x: Math.cos(a) * r, y, z: Math.sin(a) * r,
-               tw: Math.random() * 6.283, teal: i % 9 === 0 });
-  }
-  function size(){
-    const w = cv.clientWidth, h = cv.clientHeight;
-    cv.width = w * DPR; cv.height = h * DPR;
-    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  }
-  function frame(){
-    const w = cv.clientWidth, h = cv.clientHeight;
-    const cx = w / 2, cy = h / 2, R = w * 0.42;
-    ctx.clearRect(0, 0, w, h);
-    const halo = ctx.createRadialGradient(cx, cy, R * .55, cx, cy, R * 1.25);
-    halo.addColorStop(0, `rgba(${BLUE},0)`);
-    halo.addColorStop(.75, `rgba(${BLUE},.10)`);
-    halo.addColorStop(1, `rgba(${BLUE},0)`);
-    ctx.fillStyle = halo;
-    ctx.fillRect(0, 0, w, h);
-    const cosT = Math.cos(th), sinT = Math.sin(th);
-    const cosK = Math.cos(TILT), sinK = Math.sin(TILT);
-    const t = performance.now() * 0.001;
-    for (const p of pts){
-      const x1 = p.x * cosT + p.z * sinT;
-      const z1 = -p.x * sinT + p.z * cosT;
-      const x2 = x1 * cosK - p.y * sinK;
-      const y2 = x1 * sinK + p.y * cosK;
-      const sx = cx + x2 * R, sy = cy + y2 * R;
-      const depth = (z1 + 1) / 2;
-      const twk = REDUCED ? 1 : .85 + Math.sin(t * 1.4 + p.tw) * .15;
-      const alpha = ((0.10 + depth * 0.75) * twk).toFixed(3);
-      ctx.fillStyle = `rgba(${p.teal ? TEAL : BLUE},${alpha})`;
-      ctx.beginPath();
-      ctx.arc(sx, sy, 0.7 + depth * 1.25, 0, 6.283);
-      ctx.fill();
-    }
-  }
-  function step(){ th += SPEED; frame(); raf = requestAnimationFrame(step); }
-  function start(){ if (!raf && !REDUCED) raf = requestAnimationFrame(step); }
-  function stop(){ cancelAnimationFrame(raf); raf = null; }
-  window.addEventListener("resize", () => { size(); if (REDUCED) frame(); });
-  document.addEventListener("visibilitychange", () => document.hidden ? stop() : start());
-  size();
-  if (REDUCED) frame();   /* 감속 설정: 자전 없이 정지 화면 한 장 */
-  else start();
+  const authors = new Set(ITEMS.map(it => it.author).filter(Boolean));
+  const third = SITE.stats[2] || SITE.stats[SITE.stats.length - 1];
+  const items = [
+    { value: ITEMS.length, label: "작품" },
+    { value: authors.size, label: "참여 인원" },
+    ...(third ? [third] : []),
+  ];
+  $("statsSlot").innerHTML =
+    items.map(s => `<span><b>${s.value}</b>${s.label}</span>`).join("");
 })();
 
 /* ============================================================
@@ -743,6 +598,131 @@ function render(){
 }
 buildFilters();
 render();
+
+/* ---------- 히어로 시퀀스 — 말(타이핑) → 결과(작품 무대) ----------
+   prompt가 있는 작품을 순환:
+   ① 왼쪽 카드에 prompt 첫 줄 타이핑(40ms/글자)
+   ② 끝나면 오른쪽 무대에 점 4×3 정렬(0.6s ease-out)
+   ③ 격자 소멸 + 썸네일 페이드인 + 작품 이름·소속 표시
+   ④ 2.5초 유지 → 페이드아웃 → 다음 작품
+   감속 설정이거나 대상이 2개 미만이면 첫 작품의 ③ 상태로 고정 */
+(function heroSequence(){
+  const typeEl = $("typeText");
+  const dotsWrap = $("stageDots"), shot = $("stageShot"),
+        emojiEl = $("stageEmoji"), cap = $("stageCaption"),
+        capTitle = $("stageTitle"), capBy = $("stageBy");
+  if (!typeEl || !dotsWrap) return;
+  const works = SORTED.filter(it => it.prompt);
+
+  /* prompt 있는 작품이 없으면 무대를 숨기고 작품 제목만 타이핑 */
+  if (!works.length){
+    const vis = document.querySelector(".hero-visual");
+    if (vis) vis.style.display = "none";
+    const phrases = SORTED.map(it => it.title).filter(Boolean);
+    if (!phrases.length) return;
+    if (REDUCED){ typeEl.textContent = phrases[0]; return; }
+    let pi = 0, ci = 0;
+    (function t(){
+      const s = phrases[pi % phrases.length];
+      ci++;
+      typeEl.textContent = s.slice(0, ci);
+      if (ci >= s.length){ pi++; ci = 0; setTimeout(t, 2200); return; }
+      setTimeout(t, 40);
+    })();
+    return;
+  }
+
+  const firstLine = it => it.prompt.split("\n")[0].trim();
+
+  /* 4×3 점 격자 */
+  const DOTS = [];
+  for (let i = 0; i < 12; i++){
+    const d = el("span", "stage-dot");
+    dotsWrap.appendChild(d);
+    DOTS.push(d);
+  }
+  const gridX = i => 20 + (i % 4) * 20;
+  const gridY = i => 25 + ((i / 4) | 0) * 25;
+  function scatterDots(){
+    DOTS.forEach(d => {
+      d.style.transition = "none";
+      d.style.left = (5 + Math.random() * 90) + "%";
+      d.style.top  = (10 + Math.random() * 80) + "%";
+      d.style.opacity = "0";
+    });
+  }
+  function gridDotsIn(){
+    DOTS.forEach((d, i) => {
+      void d.offsetWidth;   /* 전환 재개용 리플로 */
+      d.style.transition = "";
+      d.style.left = gridX(i) + "%";
+      d.style.top  = gridY(i) + "%";
+      d.style.opacity = "1";
+    });
+  }
+  function dotsOut(){ DOTS.forEach(d => d.style.opacity = "0"); }
+
+  /* 무대 썸네일: image → 유튜브 → 이모지. 실패해도 빈 사각형이 되지 않게 */
+  function setThumb(item, done){
+    const yid = ytId(item.links.video);
+    const sources = [];
+    if (item.image) sources.push(item.image);
+    if (yid) sources.push(`https://img.youtube.com/vi/${yid}/hqdefault.jpg`);
+    emojiEl.textContent = item.emoji || "🧩";
+    if (!sources.length){ done("emoji"); return; }
+    let si = 0;
+    shot.onerror = () => { si++; si < sources.length ? (shot.src = sources[si]) : done("emoji"); };
+    shot.onload = () => done("img");
+    shot.src = sources[0];
+  }
+
+  function showResult(item, done){
+    capTitle.textContent = item.title;
+    capBy.textContent = `${item.group} ${item.author}`;
+    setThumb(item, kind => {
+      dotsOut();
+      (kind === "img" ? shot : emojiEl).classList.add("show");
+      cap.classList.add("show");
+      if (done) done();
+    });
+  }
+  function hideResult(){
+    shot.classList.remove("show");
+    emojiEl.classList.remove("show");
+    cap.classList.remove("show");
+  }
+
+  if (REDUCED || works.length < 2){
+    typeEl.textContent = firstLine(works[0]);
+    showResult(works[0]);
+    return;
+  }
+
+  let wi = 0;
+  (function cycle(){
+    const item = works[wi % works.length];
+    wi++;
+    typeEl.textContent = "";
+    hideResult();
+    scatterDots();
+    const line = firstLine(item);
+    let ci = 0;
+    (function type(){
+      ci++;
+      typeEl.textContent = line.slice(0, ci);
+      if (ci < line.length){ setTimeout(type, 40); return; }
+      gridDotsIn();
+      setTimeout(() => {
+        showResult(item, () => {
+          setTimeout(() => {
+            hideResult();
+            setTimeout(cycle, 550);
+          }, 2500);
+        });
+      }, 750);
+    })();
+  })();
+})();
 
 /* ---------- 도록형 작품 카드 (모달) ---------- */
 const overlay = $("overlay");
