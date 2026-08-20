@@ -12,6 +12,7 @@
   --ink:#17171A; --muted:#6E6C68; --line:#E3E1DC; --radius:6px;
   --on-brand:#FFFFFF; --on-brand-muted:#C7CEDA;
   --accent:#7FB8FF; --ok:#2F7D5B; --err:#B03A2E;
+  --orange:#E8762D; --orange-tint:#FFF6ED;
 }
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
@@ -25,6 +26,11 @@ main{max-width:720px;margin:0 auto;padding:28px 20px 80px}
 .card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);
   padding:22px;margin-bottom:18px}
 .card h2{font-size:1.05rem;margin-bottom:4px}
+/* 등록 목록 강조 — 주황 박스로 바로 눈에 띄게 */
+.card.spotlight{border:2px solid var(--orange);background:var(--orange-tint)}
+.card.spotlight h2{color:var(--orange)}
+.card.spotlight ul.list li{border-bottom-color:var(--orange);border-bottom-style:dashed}
+.card.spotlight ul.list .edit{border-color:var(--orange);color:var(--orange);font-weight:700}
 .card .hint{font-size:.82rem;color:var(--muted);margin-bottom:14px}
 label{display:block;font-size:.82rem;font-weight:700;margin:12px 0 4px}
 input[type=text],input[type=url],input[type=password],textarea{
@@ -132,7 +138,7 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.85em;background:var(
   </section>
 
   <!-- 등록 목록 -->
-  <section class="card">
+  <section class="card spotlight">
     <h2>관리자 등록 목록</h2>
     <p class="hint">번호는 갤러리 표시 순서입니다. [수정]을 누르면 위 입력 칸으로 불러와 고친 뒤 다시 저장하면 됩니다.</p>
     <ul class="list" id="listWorks"></ul>
