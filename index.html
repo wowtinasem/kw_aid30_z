@@ -431,6 +431,12 @@ footer .org{color:var(--on-brand);font-weight:700;font-size:.9rem}
   padding:6px 12px;display:inline-flex;align-items:center;
 }
 .footer-logos img{height:30px;width:auto;max-width:190px;object-fit:contain}
+/* 지원사업 명시 문구 — 하늘빛 포인트로 구분 */
+footer .support{color:var(--hero-accent-1)}
+/* 관리자 진입 링크 — 눈에 띄지 않게 하단에 */
+.admin-link{margin-top:14px}
+.admin-link a{color:var(--on-brand-muted);opacity:.45;font-size:.75rem;text-decoration:none}
+.admin-link a:hover,.admin-link a:focus-visible{opacity:1;text-decoration:underline}
 
 /* ---------- noscript ---------- */
 .noscript-note{padding:48px 20px;text-align:center;color:var(--muted)}
@@ -506,11 +512,32 @@ footer .org{color:var(--on-brand);font-weight:700;font-size:.9rem}
 <noscript><p class="noscript-note">이 페이지는 자바스크립트로 작품 목록을 표시합니다. 브라우저에서 자바스크립트를 켠 뒤 새로고침해 주세요.</p></noscript>
 
 <script src="data/items.js"></script>
+<script src="data/admin-data.js"></script>
 <script>
 /* ============================================================
    렌더링 엔진 — 데이터는 data/items.js 에서만 옵니다
 ============================================================ */
 const $ = id => document.getElementById(id);
+
+/* ---------- 관리자 등록분 병합 (data/admin-data.js — 관리자 페이지에서 기록) ---------- */
+(function(){
+  const AD = window.ADMIN_DATA;
+  if (!AD) return;
+  const base = ITEMS.filter(i => i.cohort === "z").reduce((m, i) => Math.max(m, i.no), 0);
+  (AD.works || []).forEach((w, i) => ITEMS.push({
+    no: base + i + 1, cohort: "z",
+    group: w.group || "", author: w.author || "",
+    title: w.title || "제목 없음",
+    topic: w.topic || "", usage: w.usage || "", prompt: w.prompt || "",
+    links: { app: w.app || "", video: w.video || "", extra: w.extra || "" },
+    image: w.image || "", emoji: w.emoji || "🎨",
+  }));
+  if (typeof VIDEOS !== "undefined")
+    (AD.videos || []).forEach(v => VIDEOS.push({
+      title: v.title || "제목 없음", group: v.group || "", author: v.author || "",
+      youtube: v.youtube || "", file: v.file || "", desc: v.desc || "",
+    }));
+})();
 
 /* ---------- 기관 표시줄 ---------- */
 (function(){
@@ -1047,7 +1074,8 @@ syncFromHash();
     .join("");
   $("footerSlot").innerHTML =
     (logos ? `<div class="footer-logos">${logos}</div>` : "") +
-    SITE.footerLines.map(l => `<div>${l}</div>`).join("");
+    SITE.footerLines.map(l => `<div>${l}</div>`).join("") +
+    `<div class="admin-link"><a href="admin.html">관리자</a></div>`;
 })();
 </script>
 </body>

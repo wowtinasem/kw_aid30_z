@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>관리자 — AID+30 작품 전시관</title>
+<link rel="icon" type="image/png" href="img/favicon.png">
+<style>
+:root{
+  --brand:#16233A; --brand-deep:#0E1726; --paper:#FFFFFF; --bg:#F7F7F5;
+  --ink:#17171A; --muted:#6E6C68; --line:#E3E1DC; --radius:6px;
+  --on-brand:#FFFFFF; --on-brand-muted:#C7CEDA;
+  --accent:#7FB8FF; --ok:#2F7D5B; --err:#B03A2E;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  background:var(--bg);color:var(--ink);font-size:16px;line-height:1.7}
+.top{background:var(--brand-deep);color:var(--on-brand);padding:12px 20px;
+  display:flex;justify-content:space-between;align-items:center}
+.top b{font-size:.95rem}
+.top a{color:var(--on-brand-muted);font-size:.85rem;text-decoration:none}
+.top a:hover{text-decoration:underline}
+main{max-width:720px;margin:0 auto;padding:28px 20px 80px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);
+  padding:22px;margin-bottom:18px}
+.card h2{font-size:1.05rem;margin-bottom:4px}
+.card .hint{font-size:.82rem;color:var(--muted);margin-bottom:14px}
+label{display:block;font-size:.82rem;font-weight:700;margin:12px 0 4px}
+input[type=text],input[type=url],input[type=password],textarea{
+  width:100%;border:1px solid var(--line);border-radius:var(--radius);
+  padding:10px 12px;font:inherit;font-size:.92rem}
+textarea{min-height:74px;resize:vertical}
+input:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--brand);outline-offset:1px}
+.btn{border:none;border-radius:var(--radius);background:var(--brand);color:var(--on-brand);
+  font:inherit;font-size:.92rem;font-weight:700;min-height:46px;padding:10px 22px;
+  cursor:pointer;margin-top:16px}
+.btn:hover{background:var(--brand-deep)}
+.btn:disabled{background:var(--line);color:var(--muted);cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.msg{margin-top:12px;font-size:.85rem;white-space:pre-line}
+.msg.ok{color:var(--ok)} .msg.err{color:var(--err)}
+.preview{margin-top:10px;max-width:320px;aspect-ratio:16/9;border:1px solid var(--line);
+  border-radius:var(--radius);overflow:hidden;background:var(--brand-deep);
+  display:none;align-items:center;justify-content:center}
+.preview img,.preview video{width:100%;height:100%;object-fit:cover}
+.preview.show{display:flex}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:560px){.row2{grid-template-columns:1fr}}
+ul.list{list-style:none;margin-top:8px}
+ul.list li{display:flex;justify-content:space-between;align-items:center;gap:10px;
+  border-bottom:1px solid var(--line);padding:8px 2px;font-size:.9rem}
+ul.list .del{border:1px solid var(--line);background:none;border-radius:var(--radius);
+  padding:4px 12px;font-size:.8rem;cursor:pointer;color:var(--err)}
+#adminMain{display:none}
+.notice{font-size:.8rem;color:var(--muted);background:var(--bg);
+  border:1px solid var(--line);border-radius:var(--radius);padding:10px 14px;margin-top:10px}
+code{font-family:ui-monospace,Consolas,monospace;font-size:.85em;background:var(--bg);padding:1px 5px;border-radius:4px}
+</style>
+</head>
+<body>
+
+<div class="top"><b>AID+30 전시관 · 관리자</b><a href="./">← 전시관으로</a></div>
+
+<main>
+
+<!-- 비밀번호 게이트 -->
+<section class="card" id="gate">
+  <h2>관리자 확인</h2>
+  <p class="hint">비밀번호를 입력하세요. (초기 비밀번호는 운영 문서 참고 — 로그인 후 변경하세요)</p>
+  <label for="gatePw">비밀번호</label>
+  <input type="password" id="gatePw" autocomplete="current-password">
+  <button class="btn" id="gateBtn">들어가기</button>
+  <p class="msg" id="gateMsg"></p>
+</section>
+
+<div id="adminMain">
+
+  <!-- GitHub 연결 -->
+  <section class="card">
+    <h2>GitHub 연결</h2>
+    <p class="hint">저장 버튼이 저장소에 자동 커밋합니다. 이 브라우저 세션에만 보관되는 토큰이 필요합니다.</p>
+    <label for="ghToken">GitHub 토큰 (Fine-grained, 이 저장소 Contents: Read and write)</label>
+    <input type="password" id="ghToken" placeholder="github_pat_...">
+    <div class="notice">발급: GitHub → Settings → Developer settings → Fine-grained tokens →
+      Repository: <code>kw_aid30_z</code> → Permissions → Contents: Read and write.
+      저장 후 사이트 반영까지 1~2분 걸립니다.</div>
+    <button class="btn ghost" id="tokenSave">이 세션에 토큰 저장</button>
+    <p class="msg" id="tokenMsg"></p>
+  </section>
+
+  <!-- 작품 추가 -->
+  <section class="card">
+    <h2>작품 추가 (바이브코딩)</h2>
+    <p class="hint">만든이·작품명·링크만으로 등록됩니다. 유튜브 링크가 있으면 썸네일이 자동으로 걸립니다.</p>
+    <div class="row2">
+      <div><label for="wAuthor">만든이 *</label><input type="text" id="wAuthor"></div>
+      <div><label for="wGroup">소속 (회사·팀)</label><input type="text" id="wGroup"></div>
+    </div>
+    <label for="wTitle">작품명 *</label><input type="text" id="wTitle">
+    <label for="wApp">앱 링크</label><input type="url" id="wApp" placeholder="https://...">
+    <label for="wVideo">유튜브 링크 (썸네일 자동)</label><input type="url" id="wVideo" placeholder="https://youtu.be/...">
+    <div class="preview" id="wPreview"><img id="wPreviewImg" alt="썸네일 미리보기"></div>
+    <label for="wTopic">작품 주제 (선택)</label><textarea id="wTopic"></textarea>
+    <label for="wPrompt">어떻게 시켰나 — AI에게 시킨 말 (선택)</label><textarea id="wPrompt"></textarea>
+    <button class="btn" id="wAdd">작품 저장</button>
+    <p class="msg" id="wMsg"></p>
+  </section>
+
+  <!-- 영상 추가 -->
+  <section class="card">
+    <h2>영상 추가</h2>
+    <p class="hint">유튜브 링크를 넣거나, 쇼츠 mp4 파일을 직접 올릴 수 있습니다 (파일당 45MB 이하).</p>
+    <div class="row2">
+      <div><label for="vAuthor">만든이</label><input type="text" id="vAuthor"></div>
+      <div><label for="vGroup">소속</label><input type="text" id="vGroup"></div>
+    </div>
+    <label for="vTitle">영상 제목 *</label><input type="text" id="vTitle">
+    <label for="vYoutube">유튜브 링크 (일반·쇼츠)</label><input type="url" id="vYoutube" placeholder="https://youtube.com/shorts/...">
+    <div class="preview" id="vPreview"><img id="vPreviewImg" alt="썸네일 미리보기"></div>
+    <label for="vFile">또는 mp4 파일 직접 업로드</label>
+    <input type="file" id="vFile" accept="video/mp4,video/webm">
+    <div class="preview" id="vFilePreview"><video id="vFileVideo" muted playsinline></video></div>
+    <label for="vDesc">한 줄 소개 (선택)</label><input type="text" id="vDesc">
+    <button class="btn" id="vAdd">영상 저장</button>
+    <p class="msg" id="vMsg"></p>
+  </section>
+
+  <!-- 등록 목록 -->
+  <section class="card">
+    <h2>관리자 등록 목록</h2>
+    <p class="hint">관리자 페이지로 올린 항목만 표시됩니다. (data/items.js에 직접 적은 작품은 코드에서 관리)</p>
+    <ul class="list" id="listWorks"></ul>
+    <ul class="list" id="listVideos"></ul>
+    <p class="msg" id="listMsg"></p>
+  </section>
+
+  <!-- 비밀번호 변경 -->
+  <section class="card">
+    <h2>비밀번호 변경</h2>
+    <div class="row2">
+      <div><label for="pw1">새 비밀번호 (4자 이상)</label><input type="password" id="pw1" autocomplete="new-password"></div>
+      <div><label for="pw2">한 번 더</label><input type="password" id="pw2" autocomplete="new-password"></div>
+    </div>
+    <button class="btn" id="pwBtn">비밀번호 변경</button>
+    <p class="msg" id="pwMsg"></p>
+    <div class="notice">이 비밀번호는 화면 잠금용입니다. 실제 쓰기 권한은 GitHub 토큰이 보호합니다 —
+      토큰은 절대 저장소나 공개된 곳에 적지 마세요.</div>
+  </section>
+
+</div>
+</main>
+
+<script>
+/* ============================================================
+   관리자 페이지 — GitHub 저장소가 DB, Contents API가 저장 통로
+============================================================ */
+const OWNER = "wowtinasem", REPO = "kw_aid30_z", BRANCH = "main";
+const DATA_PATH = "data/admin-data.js";
+const $ = id => document.getElementById(id);
+let DATA = null;
+
+const sha256 = async s => {
+  const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
+  return [...new Uint8Array(d)].map(b => b.toString(16).padStart(2, "0")).join("");
+};
+const b64bytes = bytes => {
+  let bin = "";
+  for (let i = 0; i < bytes.length; i += 0x8000)
+    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
+};
+const b64text = s => b64bytes(new TextEncoder().encode(s));
+
+function ytId(url){
+  if (!url) return "";
+  const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|shorts\/|embed\/))([\w-]{6,})/);
+  return m ? m[1] : "";
+}
+const setMsg = (id, text, ok) => {
+  const el = $(id);
+  el.textContent = text;
+  el.className = "msg " + (ok ? "ok" : "err");
+};
+
+/* ---------- 데이터 로드 ---------- */
+async function loadData(){
+  const t = await (await fetch(DATA_PATH + "?ts=" + Date.now(), { cache: "no-store" })).text();
+  DATA = JSON.parse(t.slice(t.indexOf("{"), t.lastIndexOf("}") + 1));
+}
+
+/* ---------- GitHub API ---------- */
+const token = () => sessionStorage.getItem("gh_token") || "";
+async function gh(path, opts){
+  opts = opts || {};
+  opts.headers = Object.assign({
+    "Authorization": "Bearer " + token(),
+    "Accept": "application/vnd.github+json",
+  }, opts.headers || {});
+  const res = await fetch("https://api.github.com" + path, opts);
+  if (!res.ok) throw new Error("GitHub " + res.status + " — " + (await res.text()).slice(0, 180));
+  return res.json();
+}
+async function getSha(path){
+  try { return (await gh(`/repos/${OWNER}/${REPO}/contents/${path}?ref=${BRANCH}`)).sha; }
+  catch { return null; }
+}
+async function putFile(path, contentB64, message){
+  const body = { message, content: contentB64, branch: BRANCH };
+  const sha = await getSha(path);
+  if (sha) body.sha = sha;
+  return gh(`/repos/${OWNER}/${REPO}/contents/${encodeURIComponent(path).replace(/%2F/g, "/")}`, {
+    method: "PUT", body: JSON.stringify(body),
+  });
+}
+async function saveData(message){
+  if (!token()) throw new Error("먼저 GitHub 토큰을 입력·저장하세요.");
+  const text = "window.ADMIN_DATA = " + JSON.stringify(DATA, null, 2) + ";\n";
+  await putFile(DATA_PATH, b64text(text), message);
+}
+
+/* ---------- 게이트 ---------- */
+$("gateBtn").addEventListener("click", async () => {
+  try {
+    if (!DATA) await loadData();
+    const h = await sha256($("gatePw").value);
+    if (h === DATA.passwordHash){
+      $("gate").style.display = "none";
+      $("adminMain").style.display = "block";
+      $("ghToken").value = token();
+      renderLists();
+    } else {
+      setMsg("gateMsg", "비밀번호가 다릅니다.", false);
+    }
+  } catch (e){ setMsg("gateMsg", "데이터를 불러오지 못했습니다: " + e.message, false); }
+});
+$("gatePw").addEventListener("keydown", e => { if (e.key === "Enter") $("gateBtn").click(); });
+
+/* ---------- 토큰 ---------- */
+$("tokenSave").addEventListener("click", () => {
+  sessionStorage.setItem("gh_token", $("ghToken").value.trim());
+  setMsg("tokenMsg", $("ghToken").value.trim() ? "이 브라우저 세션에 저장했습니다. (창을 닫으면 사라집니다)" : "토큰을 지웠습니다.", true);
+});
+
+/* ---------- 썸네일 미리보기 ---------- */
+function bindPreview(inputId, boxId, imgId){
+  $(inputId).addEventListener("input", () => {
+    const id = ytId($(inputId).value.trim());
+    if (id){
+      $(imgId).src = `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+      $(boxId).classList.add("show");
+    } else {
+      $(boxId).classList.remove("show");
+    }
+  });
+}
+bindPreview("wVideo", "wPreview", "wPreviewImg");
+bindPreview("vYoutube", "vPreview", "vPreviewImg");
+$("vFile").addEventListener("change", () => {
+  const f = $("vFile").files[0];
+  if (f){
+    $("vFileVideo").src = URL.createObjectURL(f);
+    $("vFilePreview").classList.add("show");
+  } else $("vFilePreview").classList.remove("show");
+});
+
+/* ---------- 작품 저장 ---------- */
+$("wAdd").addEventListener("click", async () => {
+  const w = {
+    author: $("wAuthor").value.trim(), group: $("wGroup").value.trim(),
+    title: $("wTitle").value.trim(),
+    app: $("wApp").value.trim(), video: $("wVideo").value.trim(), extra: "",
+    topic: $("wTopic").value.trim(), usage: "", prompt: $("wPrompt").value.trim(),
+    emoji: "🎨",
+  };
+  if (!w.author || !w.title){ setMsg("wMsg", "만든이와 작품명은 필수입니다.", false); return; }
+  $("wAdd").disabled = true;
+  try {
+    await loadData();                    /* 최신 상태 위에 추가 */
+    DATA.works.push(w);
+    await saveData(`admin: 작품 추가 — ${w.title}`);
+    setMsg("wMsg", "저장했습니다. 사이트 반영까지 1~2분 걸립니다.", true);
+    ["wAuthor","wGroup","wTitle","wApp","wVideo","wTopic","wPrompt"].forEach(id => $(id).value = "");
+    $("wPreview").classList.remove("show");
+    renderLists();
+  } catch (e){ setMsg("wMsg", "실패: " + e.message, false); }
+  $("wAdd").disabled = false;
+});
+
+/* ---------- 영상 저장 (유튜브 링크 또는 mp4 직접 업로드) ---------- */
+$("vAdd").addEventListener("click", async () => {
+  const v = {
+    title: $("vTitle").value.trim(), author: $("vAuthor").value.trim(),
+    group: $("vGroup").value.trim(), youtube: $("vYoutube").value.trim(),
+    file: "", desc: $("vDesc").value.trim(),
+  };
+  const f = $("vFile").files[0];
+  if (!v.title){ setMsg("vMsg", "영상 제목은 필수입니다.", false); return; }
+  if (!v.youtube && !f){ setMsg("vMsg", "유튜브 링크 또는 mp4 파일 중 하나가 필요합니다.", false); return; }
+  if (f && f.size > 45 * 1024 * 1024){ setMsg("vMsg", "파일이 45MB를 넘습니다. 압축하거나 유튜브에 올려 주세요.", false); return; }
+  $("vAdd").disabled = true;
+  try {
+    if (f && !v.youtube){
+      setMsg("vMsg", "파일 업로드 중... (" + Math.round(f.size / 1048576) + "MB)", true);
+      const bytes = new Uint8Array(await f.arrayBuffer());
+      const name = "video/" + Date.now() + "-" + f.name.replace(/[^\w.-]/g, "_");
+      await putFile(name, b64bytes(bytes), `admin: 영상 업로드 — ${v.title}`);
+      v.file = name;
+    }
+    await loadData();
+    DATA.videos.push(v);
+    await saveData(`admin: 영상 추가 — ${v.title}`);
+    setMsg("vMsg", "저장했습니다. 사이트 반영까지 1~2분 걸립니다.", true);
+    ["vTitle","vAuthor","vGroup","vYoutube","vDesc"].forEach(id => $(id).value = "");
+    $("vFile").value = "";
+    $("vPreview").classList.remove("show");
+    $("vFilePreview").classList.remove("show");
+    renderLists();
+  } catch (e){ setMsg("vMsg", "실패: " + e.message, false); }
+  $("vAdd").disabled = false;
+});
+
+/* ---------- 등록 목록 · 삭제 ---------- */
+function renderLists(){
+  const lw = $("listWorks"), lv = $("listVideos");
+  lw.textContent = ""; lv.textContent = "";
+  const row = (label, onDel) => {
+    const li = document.createElement("li");
+    const s = document.createElement("span"); s.textContent = label;
+    const b = document.createElement("button"); b.className = "del"; b.textContent = "삭제";
+    b.addEventListener("click", onDel);
+    li.append(s, b);
+    return li;
+  };
+  DATA.works.forEach((w, i) =>
+    lw.appendChild(row(`[작품] ${w.title} — ${w.group} ${w.author}`, () => removeItem("works", i))));
+  DATA.videos.forEach((v, i) =>
+    lv.appendChild(row(`[영상] ${v.title} — ${v.group} ${v.author}`, () => removeItem("videos", i))));
+  if (!DATA.works.length && !DATA.videos.length)
+    lw.innerHTML = "<li><span>아직 관리자 페이지로 올린 항목이 없습니다.</span></li>";
+}
+async function removeItem(kind, idx){
+  const name = DATA[kind][idx].title;
+  try {
+    await loadData();
+    DATA[kind].splice(idx, 1);
+    await saveData(`admin: ${kind === "works" ? "작품" : "영상"} 삭제 — ${name}`);
+    setMsg("listMsg", "삭제했습니다. 사이트 반영까지 1~2분 걸립니다.", true);
+    renderLists();
+  } catch (e){ setMsg("listMsg", "실패: " + e.message, false); }
+}
+
+/* ---------- 비밀번호 변경 ---------- */
+$("pwBtn").addEventListener("click", async () => {
+  const a = $("pw1").value, b = $("pw2").value;
+  if (a.length < 4){ setMsg("pwMsg", "4자 이상으로 정해 주세요.", false); return; }
+  if (a !== b){ setMsg("pwMsg", "두 입력이 서로 다릅니다.", false); return; }
+  $("pwBtn").disabled = true;
+  try {
+    await loadData();
+    DATA.passwordHash = await sha256(a);
+    await saveData("admin: 비밀번호 변경");
+    setMsg("pwMsg", "변경했습니다. 다음 로그인부터 새 비밀번호를 쓰세요.", true);
+    $("pw1").value = ""; $("pw2").value = "";
+  } catch (e){ setMsg("pwMsg", "실패: " + e.message, false); }
+  $("pwBtn").disabled = false;
+});
+
+loadData().catch(() => {});
+</script>
+</body>
+</html>
