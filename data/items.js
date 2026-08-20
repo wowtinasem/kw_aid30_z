@@ -9,7 +9,7 @@
 const SITE = {
   /* 상단 표시줄 */
   orgName:     "계원예술대학교",
-  orgLogo:     "img/logo-kaywon.png",   // 왼쪽 — 계원예술대학교 평생교육원(수신재). "" 이면 orgName 텍스트
+  orgLogo:     "img/logo-kaywon-inv.png",   // 왼쪽 — 계원예술대(수신재) 반전판(어두운 바용). 원본은 img/logo-kaywon.png
   programName: "AI·D 30+ 집중캠프",
   programLogo: "",                      // 이미지 대신 아래 programMark 텍스트 로고를 사용합니다
   /* 오른쪽 상단 텍스트 로고 — 원본 이미지의 텍스트를 반전 색감으로 재구성 */

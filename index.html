@@ -84,8 +84,10 @@ button{font-family:inherit;cursor:pointer}
 }
 .gov-bar .org{font-weight:700;display:flex;align-items:center;min-width:0}
 .gov-bar .prog{color:var(--on-brand-muted);font-weight:600;letter-spacing:.08em;white-space:nowrap;display:flex;align-items:center}
-/* 로고는 밝은 배경용이므로 어두운 바 위에서는 흰 칩에 올립니다 */
-.gov-bar .org img,.gov-bar .prog img{
+/* 왼쪽 기관 로고 — 반전판 이미지라 칩 없이 그대로 올립니다 */
+.gov-bar .org img{height:38px;width:auto;max-width:46vw;object-fit:contain}
+/* (폴백) 프로그램 로고를 이미지로 쓰는 경우 — 밝은 배경용이라 흰 칩에 올립니다 */
+.gov-bar .prog img{
   height:36px;width:auto;max-width:46vw;object-fit:contain;
   background:var(--paper);padding:5px 10px;border-radius:6px;
 }
