@@ -225,11 +225,9 @@ button{font-family:inherit;cursor:pointer}
   -webkit-background-clip:text;background-clip:text;color:transparent;
   -webkit-text-stroke:1px var(--petal-front-line);
   filter:drop-shadow(0 10px 22px rgba(8,18,40,.5)) drop-shadow(0 0 18px var(--beam-a));
-  /* 개화 루프(7초): --dx 만큼 흩어진 채 피어오름 → 가운데로 모여 만남 → 유지 → 소멸 */
-  --dx:0px; --d:0s; --rot:0deg;
+  /* 흩어짐 좌표(--dx·--dy)·지연(--d)·기울기(--rot)는 마크업에서, 패턴은 .aid-bloom의 p1~p3 클래스가 결정 */
+  --dx:0px; --dy:-80px; --d:0s; --rot:0deg;
   opacity:0;
-  animation:glyphLoop 7s ease-in-out infinite;
-  animation-delay:var(--d);
 }
 .glyph.num{font-size:3.2rem}
 .glyph.plus{
@@ -240,11 +238,31 @@ button{font-family:inherit;cursor:pointer}
   -webkit-text-stroke:1px var(--hero-accent-2);
   filter:drop-shadow(0 0 18px var(--halo-a)) drop-shadow(0 6px 14px rgba(8,18,40,.4));
 }
-@keyframes glyphLoop{
+/* 패턴별 재생 — JS가 사이클마다 p1→p2→p3 클래스를 순환시킵니다 */
+.aid-bloom.p1 .glyph{animation:glyphRise  7s ease-in-out both;animation-delay:var(--d)}
+.aid-bloom.p2 .glyph{animation:glyphOrbit 7s ease-in-out both;animation-delay:var(--d)}
+.aid-bloom.p3 .glyph{animation:glyphDepth 7s ease-in-out both;animation-delay:var(--d)}
+
+/* 패턴 ① 아래에서 피어올라 수평으로 흩어졌다가 모임 (기존) */
+@keyframes glyphRise{
   0%{opacity:0;transform:translate(calc(var(--dx) * 1.8), 52px) rotate(var(--rot)) scale(.6)}
   13%{opacity:1;transform:translate(var(--dx), 6px) rotate(calc(var(--rot) * .3)) scale(1)}
   32%,80%{opacity:1;transform:translate(0, 0) rotate(0deg) scale(1)}
   94%,100%{opacity:0;transform:translate(calc(var(--dx) * 1.2), 44px) rotate(var(--rot)) scale(.7)}
+}
+/* 패턴 ② 사방에서 회전하며 날아와 만나고, 반대편으로 흩어짐 */
+@keyframes glyphOrbit{
+  0%{opacity:0;transform:translate(calc(var(--dx) * 2.4), var(--dy)) rotate(calc(var(--rot) * 6)) scale(.5)}
+  16%{opacity:1;transform:translate(calc(var(--dx) * .9), calc(var(--dy) * .3)) rotate(calc(var(--rot) * 2)) scale(1.06)}
+  36%,80%{opacity:1;transform:translate(0, 0) rotate(0deg) scale(1)}
+  94%,100%{opacity:0;transform:translate(calc(var(--dx) * -1.4), calc(var(--dy) * -.7)) rotate(calc(var(--rot) * -3)) scale(.55)}
+}
+/* 패턴 ③ 멀리서 크게 떠올랐다가 줌인되며 제자리에서 만남 */
+@keyframes glyphDepth{
+  0%{opacity:0;transform:translate(calc(var(--dx) * .8), calc(var(--dy) * .5)) scale(2.6)}
+  18%{opacity:.9;transform:translate(calc(var(--dx) * .25), 0) scale(1.4)}
+  38%,80%{opacity:1;transform:translate(0, 0) scale(1)}
+  94%,100%{opacity:0;transform:scale(.25)}
 }
 .ripple{
   position:absolute;left:50%;border:1px solid var(--ripple-line);
@@ -444,12 +462,12 @@ footer .org{color:var(--on-brand);font-weight:700;font-size:.9rem}
       <canvas class="globe" id="globe"></canvas>
       <div class="aid-bloom">
         <span class="ripple r2"></span><span class="ripple r1"></span>
-        <span class="glyph"      style="--dx:-68px;--d:.15s;--rot:-10deg">A</span>
-        <span class="glyph"      style="--dx:-42px;--d:.3s;--rot:-6deg">I</span>
-        <span class="glyph"      style="--dx:-14px;--d:.45s;--rot:3deg">D</span>
-        <span class="glyph num"  style="--dx:28px;--d:.6s;--rot:6deg">3</span>
-        <span class="glyph num"  style="--dx:52px;--d:.75s;--rot:9deg">0</span>
-        <span class="glyph plus" style="--dx:78px;--d:.9s;--rot:12deg">+</span>
+        <span class="glyph"      style="--dx:-68px;--dy:-76px;--d:.15s;--rot:-10deg">A</span>
+        <span class="glyph"      style="--dx:-42px;--dy:64px;--d:.3s;--rot:-6deg">I</span>
+        <span class="glyph"      style="--dx:-14px;--dy:-58px;--d:.45s;--rot:3deg">D</span>
+        <span class="glyph num"  style="--dx:28px;--dy:72px;--d:.6s;--rot:6deg">3</span>
+        <span class="glyph num"  style="--dx:52px;--dy:-66px;--d:.75s;--rot:9deg">0</span>
+        <span class="glyph plus" style="--dx:78px;--dy:56px;--d:.9s;--rot:12deg">+</span>
       </div>
     </div>
   </div>
@@ -556,6 +574,22 @@ $("subSlot").innerHTML = SITE.subHTML;
     if (del && ci === 0) { del = false; pi = (pi + 1) % phrases.length; }
     setTimeout(tick, del ? 30 : 90);
   })();
+})();
+
+/* ---------- AI.D 30+ 블룸 패턴 순환 — 사이클마다 p1→p2→p3 ---------- */
+(function bloomPatterns(){
+  const bloom = document.querySelector(".aid-bloom");
+  if (!bloom || REDUCED) return;   /* 감속 설정: 조립 완료 상태 고정 (CSS) */
+  const patterns = ["p1", "p2", "p3"];
+  let pi = 0;
+  bloom.classList.add(patterns[0]);
+  /* 한 사이클 = 재생 7.9초(7s + 최대 지연 .9s) + 여백 → 8.2초마다 다음 패턴 */
+  setInterval(() => {
+    bloom.classList.remove(patterns[pi % patterns.length]);
+    pi++;
+    void bloom.offsetWidth;   /* 리플로로 애니메이션 재시작 */
+    bloom.classList.add(patterns[pi % patterns.length]);
+  }, 8200);
 })();
 
 /* ---------- 디지털 닷 스피어 — 점으로 된 구가 연꽃 뒤에서 천천히 자전 ---------- */
