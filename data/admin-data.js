@@ -4,7 +4,7 @@ window.ADMIN_DATA = {
     {
       "author": "이순남",
       "group": "마인드캔버스",
-      "title": "바이브코딩 필수 용",
+      "title": "바이브코딩 필수 용어",
       "app": "https://kyewon-vibe-coding-glossary.soonanm.chatgpt.site/",
       "video": "",
       "extra": "",

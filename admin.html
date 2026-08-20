@@ -50,8 +50,11 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px soli
 ul.list{list-style:none;margin-top:8px}
 ul.list li{display:flex;justify-content:space-between;align-items:center;gap:10px;
   border-bottom:1px solid var(--line);padding:8px 2px;font-size:.9rem}
-ul.list .del{border:1px solid var(--line);background:none;border-radius:var(--radius);
-  padding:4px 12px;font-size:.8rem;cursor:pointer;color:var(--err)}
+ul.list .btns{display:flex;gap:6px;flex:none}
+ul.list .edit,ul.list .del{border:1px solid var(--line);background:none;border-radius:var(--radius);
+  padding:4px 12px;font-size:.8rem;cursor:pointer}
+ul.list .edit{color:var(--ink)}
+ul.list .del{color:var(--err)}
 #adminMain{display:none}
 .notice{font-size:.8rem;color:var(--muted);background:var(--bg);
   border:1px solid var(--line);border-radius:var(--radius);padding:10px 14px;margin-top:10px}
@@ -104,6 +107,7 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.85em;background:var(
     <label for="wTopic">작품 주제 (선택)</label><textarea id="wTopic"></textarea>
     <label for="wPrompt">어떻게 시켰나 — AI에게 시킨 말 (선택)</label><textarea id="wPrompt"></textarea>
     <button class="btn" id="wAdd">작품 저장</button>
+    <button class="btn ghost" id="wCancel" style="display:none">수정 취소</button>
     <p class="msg" id="wMsg"></p>
   </section>
 
@@ -123,13 +127,14 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.85em;background:var(
     <div class="preview" id="vFilePreview"><video id="vFileVideo" muted playsinline></video></div>
     <label for="vDesc">한 줄 소개 (선택)</label><input type="text" id="vDesc">
     <button class="btn" id="vAdd">영상 저장</button>
+    <button class="btn ghost" id="vCancel" style="display:none">수정 취소</button>
     <p class="msg" id="vMsg"></p>
   </section>
 
   <!-- 등록 목록 -->
   <section class="card">
     <h2>관리자 등록 목록</h2>
-    <p class="hint">관리자 페이지로 올린 항목만 표시됩니다. (data/items.js에 직접 적은 작품은 코드에서 관리)</p>
+    <p class="hint">번호는 갤러리 표시 순서입니다. [수정]을 누르면 위 입력 칸으로 불러와 고친 뒤 다시 저장하면 됩니다.</p>
     <ul class="list" id="listWorks"></ul>
     <ul class="list" id="listVideos"></ul>
     <p class="msg" id="listMsg"></p>
@@ -293,7 +298,37 @@ $("vFile").addEventListener("change", () => {
   } else $("vFilePreview").classList.remove("show");
 });
 
-/* ---------- 작품 저장 ---------- */
+/* ---------- 작품 저장 (추가·수정 겸용) ---------- */
+let editWork = -1;   /* -1 = 새로 추가, 0 이상 = 해당 번호 수정 중 */
+
+function setWorkMode(){
+  $("wAdd").textContent = editWork >= 0 ? `작품 ${String(editWork + 1).padStart(2, "0")} 수정 저장` : "작품 저장";
+  $("wCancel").style.display = editWork >= 0 ? "inline-flex" : "none";
+}
+function clearWorkForm(){
+  ["wAuthor","wGroup","wTitle","wApp","wVideo","wTopic","wPrompt"].forEach(id => $(id).value = "");
+  $("wApp").dataset.og = "";
+  $("wPreview").classList.remove("show");
+}
+function startEditWork(i){
+  const w = DATA.works[i];
+  editWork = i;
+  $("wAuthor").value = w.author || ""; $("wGroup").value = w.group || "";
+  $("wTitle").value = w.title || "";   $("wApp").value = w.app || "";
+  $("wVideo").value = w.video || "";   $("wTopic").value = w.topic || "";
+  $("wPrompt").value = w.prompt || "";
+  $("wApp").dataset.og = w.image || "";
+  if (w.image){ $("wPreviewImg").src = w.image; $("wPreview").classList.add("show"); }
+  else $("wPreview").classList.remove("show");
+  setWorkMode();
+  setMsg("wMsg", `작품 ${String(i + 1).padStart(2, "0")} 「${w.title}」을 불러왔습니다 — 고친 뒤 저장을 누르세요.`, true);
+  $("wTitle").scrollIntoView({ behavior: "smooth", block: "center" });
+}
+$("wCancel").addEventListener("click", () => {
+  editWork = -1; clearWorkForm(); setWorkMode();
+  setMsg("wMsg", "수정을 취소했습니다.", true);
+});
+
 $("wAdd").addEventListener("click", async () => {
   const w = {
     author: $("wAuthor").value.trim(), group: $("wGroup").value.trim(),
@@ -307,19 +342,54 @@ $("wAdd").addEventListener("click", async () => {
   try {
     /* 썸네일 = 앱 페이지의 오픈그래프 이미지 (미리 찾아둔 값이 없으면 저장 시점에 시도) */
     w.image = $("wApp").dataset.og || (w.app ? await fetchOgImage(w.app) : "");
-    await loadData();                    /* 최신 상태 위에 추가 */
-    DATA.works.push(w);
-    await saveData(`admin: 작품 추가 — ${w.title}`);
-    setMsg("wMsg", "저장했습니다. 사이트 반영까지 1~2분 걸립니다.", true);
-    ["wAuthor","wGroup","wTitle","wApp","wVideo","wTopic","wPrompt"].forEach(id => $(id).value = "");
-    $("wApp").dataset.og = "";
-    $("wPreview").classList.remove("show");
+    await loadData();                    /* 최신 상태 위에 반영 */
+    const editing = editWork >= 0 && editWork < DATA.works.length;
+    if (editing) DATA.works[editWork] = w;
+    else DATA.works.push(w);
+    await saveData(`admin: 작품 ${editing ? "수정" : "추가"} — ${w.title}`);
+    setMsg("wMsg", `${editing ? "수정" : "저장"}했습니다. 사이트 반영까지 1~2분 걸립니다.`, true);
+    editWork = -1; setWorkMode();
+    clearWorkForm();
     renderLists();
   } catch (e){ setMsg("wMsg", "실패: " + e.message, false); }
   $("wAdd").disabled = false;
 });
 
-/* ---------- 영상 저장 (유튜브 링크 또는 mp4 직접 업로드) ---------- */
+/* ---------- 영상 저장 (추가·수정 겸용 — 유튜브 링크 또는 mp4 직접 업로드) ---------- */
+let editVideo = -1, keptVideoFile = "";
+
+function setVideoMode(){
+  $("vAdd").textContent = editVideo >= 0 ? `영상 ${String(editVideo + 1).padStart(2, "0")} 수정 저장` : "영상 저장";
+  $("vCancel").style.display = editVideo >= 0 ? "inline-flex" : "none";
+}
+function clearVideoForm(){
+  ["vTitle","vAuthor","vGroup","vYoutube","vDesc"].forEach(id => $(id).value = "");
+  $("vFile").value = "";
+  keptVideoFile = "";
+  $("vPreview").classList.remove("show");
+  $("vFilePreview").classList.remove("show");
+}
+function startEditVideo(i){
+  const v = DATA.videos[i];
+  editVideo = i;
+  $("vTitle").value = v.title || ""; $("vAuthor").value = v.author || "";
+  $("vGroup").value = v.group || ""; $("vYoutube").value = v.youtube || "";
+  $("vDesc").value = v.desc || "";
+  keptVideoFile = v.file || "";
+  const yid = ytId(v.youtube);
+  if (yid){ $("vPreviewImg").src = `https://img.youtube.com/vi/${yid}/hqdefault.jpg`; $("vPreview").classList.add("show"); }
+  else $("vPreview").classList.remove("show");
+  if (keptVideoFile){ $("vFileVideo").src = keptVideoFile; $("vFilePreview").classList.add("show"); }
+  else $("vFilePreview").classList.remove("show");
+  setVideoMode();
+  setMsg("vMsg", `영상 ${String(i + 1).padStart(2, "0")} 「${v.title}」을 불러왔습니다 — 고친 뒤 저장을 누르세요.`, true);
+  $("vTitle").scrollIntoView({ behavior: "smooth", block: "center" });
+}
+$("vCancel").addEventListener("click", () => {
+  editVideo = -1; clearVideoForm(); setVideoMode();
+  setMsg("vMsg", "수정을 취소했습니다.", true);
+});
+
 $("vAdd").addEventListener("click", async () => {
   const v = {
     title: $("vTitle").value.trim(), author: $("vAuthor").value.trim(),
@@ -328,7 +398,7 @@ $("vAdd").addEventListener("click", async () => {
   };
   const f = $("vFile").files[0];
   if (!v.title){ setMsg("vMsg", "영상 제목은 필수입니다.", false); return; }
-  if (!v.youtube && !f){ setMsg("vMsg", "유튜브 링크 또는 mp4 파일 중 하나가 필요합니다.", false); return; }
+  if (!v.youtube && !f && !keptVideoFile){ setMsg("vMsg", "유튜브 링크 또는 mp4 파일 중 하나가 필요합니다.", false); return; }
   if (f && f.size > 45 * 1024 * 1024){ setMsg("vMsg", "파일이 45MB를 넘습니다. 압축하거나 유튜브에 올려 주세요.", false); return; }
   $("vAdd").disabled = true;
   try {
@@ -338,46 +408,59 @@ $("vAdd").addEventListener("click", async () => {
       const name = "video/" + Date.now() + "-" + f.name.replace(/[^\w.-]/g, "_");
       await putFile(name, b64bytes(bytes), `admin: 영상 업로드 — ${v.title}`);
       v.file = name;
+    } else if (!v.youtube){
+      v.file = keptVideoFile;   /* 수정 시 파일을 새로 안 올리면 기존 파일 유지 */
     }
     await loadData();
-    DATA.videos.push(v);
-    await saveData(`admin: 영상 추가 — ${v.title}`);
-    setMsg("vMsg", "저장했습니다. 사이트 반영까지 1~2분 걸립니다.", true);
-    ["vTitle","vAuthor","vGroup","vYoutube","vDesc"].forEach(id => $(id).value = "");
-    $("vFile").value = "";
-    $("vPreview").classList.remove("show");
-    $("vFilePreview").classList.remove("show");
+    const editing = editVideo >= 0 && editVideo < DATA.videos.length;
+    if (editing) DATA.videos[editVideo] = v;
+    else DATA.videos.push(v);
+    await saveData(`admin: 영상 ${editing ? "수정" : "추가"} — ${v.title}`);
+    setMsg("vMsg", `${editing ? "수정" : "저장"}했습니다. 사이트 반영까지 1~2분 걸립니다.`, true);
+    editVideo = -1; setVideoMode();
+    clearVideoForm();
     renderLists();
   } catch (e){ setMsg("vMsg", "실패: " + e.message, false); }
   $("vAdd").disabled = false;
 });
 
-/* ---------- 등록 목록 · 삭제 ---------- */
+/* ---------- 등록 목록 — 번호·수정·삭제 ---------- */
 function renderLists(){
   const lw = $("listWorks"), lv = $("listVideos");
   lw.textContent = ""; lv.textContent = "";
-  const row = (label, onDel) => {
+  const row = (label, onEdit, onDel) => {
     const li = document.createElement("li");
     const s = document.createElement("span"); s.textContent = label;
-    const b = document.createElement("button"); b.className = "del"; b.textContent = "삭제";
-    b.addEventListener("click", onDel);
-    li.append(s, b);
+    const btns = document.createElement("span"); btns.className = "btns";
+    const e = document.createElement("button"); e.className = "edit"; e.textContent = "수정";
+    e.addEventListener("click", onEdit);
+    const d = document.createElement("button"); d.className = "del"; d.textContent = "삭제";
+    d.addEventListener("click", onDel);
+    btns.append(e, d);
+    li.append(s, btns);
     return li;
   };
+  const p2 = n => String(n).padStart(2, "0");
   DATA.works.forEach((w, i) =>
-    lw.appendChild(row(`[작품] ${w.title} — ${w.group} ${w.author}`, () => removeItem("works", i))));
+    lw.appendChild(row(`작품 ${p2(i + 1)} · ${w.title} — ${w.group} ${w.author}`,
+      () => startEditWork(i), () => removeItem("works", i))));
   DATA.videos.forEach((v, i) =>
-    lv.appendChild(row(`[영상] ${v.title} — ${v.group} ${v.author}`, () => removeItem("videos", i))));
+    lv.appendChild(row(`영상 ${p2(i + 1)} · ${v.title} — ${v.group} ${v.author}`,
+      () => startEditVideo(i), () => removeItem("videos", i))));
   if (!DATA.works.length && !DATA.videos.length)
     lw.innerHTML = "<li><span>아직 관리자 페이지로 올린 항목이 없습니다.</span></li>";
 }
 async function removeItem(kind, idx){
   const name = DATA[kind][idx].title;
+  if (!confirm(`「${name}」을 삭제할까요? 되돌리려면 다시 등록해야 합니다.`)) return;
   try {
     await loadData();
     DATA[kind].splice(idx, 1);
     await saveData(`admin: ${kind === "works" ? "작품" : "영상"} 삭제 — ${name}`);
     setMsg("listMsg", "삭제했습니다. 사이트 반영까지 1~2분 걸립니다.", true);
+    /* 삭제로 번호가 바뀌므로 진행 중이던 수정을 초기화합니다 */
+    editWork = -1; setWorkMode(); clearWorkForm();
+    editVideo = -1; setVideoMode(); clearVideoForm();
     renderLists();
   } catch (e){ setMsg("listMsg", "실패: " + e.message, false); }
 }
