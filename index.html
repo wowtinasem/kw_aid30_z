@@ -202,63 +202,50 @@ button{font-family:inherit;cursor:pointer}
   transform:translate(-50%,-50%);
   pointer-events:none;opacity:.9;
 }
-.lotus{
-  position:relative;z-index:1;width:330px;height:255px;
+/* AI.D 30+ 글래스 블룸 — 글자가 각자 피어올랐다가 하나로 만납니다 */
+.aid-bloom{
+  position:relative;z-index:1;
+  display:flex;align-items:center;gap:10px;
+  height:255px;padding-bottom:26px;
   animation:floatY 8s ease-in-out 2s infinite;
 }
-.lotus::before{ /* 후광 */
-  content:"";position:absolute;left:50%;top:52%;width:300px;height:300px;
+.aid-bloom::before{ /* 후광 */
+  content:"";position:absolute;left:50%;top:46%;width:300px;height:300px;
   transform:translate(-50%,-50%);
   background:radial-gradient(circle,var(--halo-a) 0%,var(--halo-b) 45%,transparent 70%);
   filter:blur(6px);
 }
-.petal{
-  position:absolute;left:50%;bottom:52px;
-  transform-origin:50% 100%;
-  border:1px solid var(--petal-line);
-  background:linear-gradient(180deg,var(--petal-fill) 0%,rgba(255,255,255,.03) 70%);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.28), inset 0 -8px 22px var(--petal-glow);
-  border-radius:50% 50% 46% 46% / 78% 78% 24% 24%;
-  /* 반복 개화(5초 주기): 피어남 → 만개 유지 → 오므림 → 다시 개화 */
-  --r:0deg; --d:.8s; --po:1;
-  opacity:0;
-  animation:bloomLoop 5s ease-in-out infinite;
-  animation-delay:var(--d);
-}
-@keyframes bloomLoop{
-  0%{transform:rotate(calc(var(--r) * .12)) scale(.5,.3);opacity:0}
-  12%{opacity:var(--po)}
-  20%,80%{transform:rotate(var(--r)) scale(1,1);opacity:var(--po)}
-  93%,100%{transform:rotate(calc(var(--r) * .12)) scale(.5,.3);opacity:0}
-}
-.pb{width:84px;height:138px;margin-left:-42px;--po:.75}
-.p1{--r:-52deg;--d:.75s} .p2{--r:-19deg;--d:.95s}
-.p3{--r:19deg;--d:.95s}  .p4{--r:52deg;--d:.75s}
-.pf{
-  width:96px;height:186px;margin-left:-48px;
+.glyph{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:56px;height:74px;border-radius:14px;
+  border:1px solid var(--petal-front-line);
   background:linear-gradient(180deg,var(--petal-front-fill) 0%,rgba(255,255,255,.05) 72%);
-  border-color:var(--petal-front-line);
   backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.35), inset 0 -10px 26px var(--halo-a),
              0 10px 34px rgba(8,18,40,.35);
+  font-family:var(--font-display);font-weight:900;font-size:2rem;
+  color:var(--on-brand);text-shadow:0 0 18px var(--beam-a);
+  /* 개화 루프(7초): --dx 만큼 흩어진 채 피어오름 → 가운데로 모여 만남 → 유지 → 소멸 */
+  --dx:0px; --d:0s; --rot:0deg;
+  opacity:0;
+  animation:glyphLoop 7s ease-in-out infinite;
+  animation-delay:var(--d);
 }
-.p5{--r:-26deg;--d:1.15s;height:168px}
-.p6{--r:0deg;--d:1.35s}
-.p7{--r:26deg;--d:1.15s;height:168px}
-.core{
-  position:absolute;left:50%;bottom:64px;width:26px;height:26px;
-  margin-left:-13px;border-radius:50%;
-  background:radial-gradient(circle,var(--hero-accent-2-hi) 0%,var(--hero-accent-2) 45%,transparent 75%);
-  filter:blur(1px);opacity:0;
-  animation:coreLoop 5s ease-in-out infinite;
-  animation-delay:1.35s;
+.glyph.dot{width:26px;height:40px;font-size:1.4rem;border-radius:9px;align-self:flex-end;margin-bottom:32px}
+.glyph.num{width:46px;height:62px;font-size:1.6rem;border-radius:12px}
+.glyph.plus{
+  width:36px;height:36px;font-size:1.5rem;border-radius:50%;
+  align-self:flex-start;margin-top:44px;
+  color:var(--hero-accent-2-hi);
+  border-color:var(--petal-line);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.35), 0 0 22px var(--halo-a);
+  text-shadow:0 0 14px var(--hero-accent-2);
 }
-@keyframes coreLoop{
-  0%,17%{opacity:0;transform:scale(.2)}
-  26%{opacity:.75;transform:scale(1)}
-  50%{opacity:1;transform:scale(1.16)}
-  78%{opacity:.75;transform:scale(1)}
-  91%,100%{opacity:0;transform:scale(.2)}
+@keyframes glyphLoop{
+  0%{opacity:0;transform:translate(calc(var(--dx) * 1.8), 52px) rotate(var(--rot)) scale(.6)}
+  13%{opacity:1;transform:translate(var(--dx), 6px) rotate(calc(var(--rot) * .3)) scale(1)}
+  32%,80%{opacity:1;transform:translate(0, 0) rotate(0deg) scale(1)}
+  94%,100%{opacity:0;transform:translate(calc(var(--dx) * 1.2), 44px) rotate(var(--rot)) scale(.7)}
 }
 .ripple{
   position:absolute;left:50%;border:1px solid var(--ripple-line);
@@ -275,7 +262,7 @@ button{font-family:inherit;cursor:pointer}
   .hero-sub{margin:0 auto}
   .prompt-line{margin:24px auto 0}
   .hero-visual{margin-top:22px;min-height:0}
-  .lotus{transform:scale(.72);transform-origin:bottom center;margin-bottom:-30px;animation:none}
+  .aid-bloom{transform:scale(.72);transform-origin:bottom center;margin-bottom:-30px;animation:none}
   .globe{width:340px;height:340px}
 }
 
@@ -285,9 +272,8 @@ button{font-family:inherit;cursor:pointer}
   .caret{animation:none}
   .beam{animation:none}
   .prompt-line{animation:none;opacity:1}
-  .lotus{animation:none}
-  .petal{animation:none;opacity:var(--po);transform:rotate(var(--r))}
-  .core{animation:none;opacity:1;transform:scale(1)}
+  .aid-bloom{animation:none}
+  .glyph{animation:none;opacity:1;transform:none}
   .ripple{animation:none;opacity:var(--o)}
 }
 
@@ -457,11 +443,15 @@ footer .org{color:var(--on-brand);font-weight:700;font-size:.9rem}
     </div>
     <div class="hero-visual fx" aria-hidden="true">
       <canvas class="globe" id="globe"></canvas>
-      <div class="lotus">
+      <div class="aid-bloom">
         <span class="ripple r2"></span><span class="ripple r1"></span>
-        <i class="petal pb p1"></i><i class="petal pb p2"></i><i class="petal pb p3"></i><i class="petal pb p4"></i>
-        <i class="petal pf p5"></i><i class="petal pf p7"></i><i class="petal pf p6"></i>
-        <b class="core"></b>
+        <span class="glyph"      style="--dx:-76px;--d:.15s;--rot:-10deg">A</span>
+        <span class="glyph"      style="--dx:-48px;--d:.3s;--rot:-6deg">I</span>
+        <span class="glyph dot"  style="--dx:-26px;--d:.45s;--rot:-3deg">.</span>
+        <span class="glyph"      style="--dx:-4px;--d:.6s;--rot:3deg">D</span>
+        <span class="glyph num"  style="--dx:36px;--d:.75s;--rot:6deg">3</span>
+        <span class="glyph num"  style="--dx:60px;--d:.9s;--rot:9deg">0</span>
+        <span class="glyph plus" style="--dx:86px;--d:1.05s;--rot:12deg">+</span>
       </div>
     </div>
   </div>
