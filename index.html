@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AID+30 작품 전시관 — 계원예술대학교</title>
 <meta name="description" content="계원예술대학교 AID+30 수강생이 수업에서 직접 만든 도구를 전시합니다.">
+<!-- 파비콘 — 계원 수신재 초록 마크 -->
+<link rel="icon" type="image/png" href="img/favicon.png">
 <!-- 오픈그래프 — 링크 미리보기. og.png는 히어로 1200×630 캡처 (브랜드 색 확정 시 재캡처) -->
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://wowtinasem.github.io/kw_aid30_z/">
@@ -81,8 +83,12 @@ button{font-family:inherit;cursor:pointer}
   padding:0 20px;font-size:.85rem;
 }
 .gov-bar .org{font-weight:700;display:flex;align-items:center;min-width:0}
-.gov-bar .org img{height:30px;width:auto}
-.gov-bar .prog{color:var(--on-brand-muted);font-weight:600;letter-spacing:.08em;white-space:nowrap}
+.gov-bar .prog{color:var(--on-brand-muted);font-weight:600;letter-spacing:.08em;white-space:nowrap;display:flex;align-items:center}
+/* 로고는 밝은 배경용이므로 어두운 바 위에서는 흰 칩에 올립니다 */
+.gov-bar .org img,.gov-bar .prog img{
+  height:36px;width:auto;max-width:46vw;object-fit:contain;
+  background:var(--paper);padding:5px 10px;border-radius:6px;
+}
 
 /* ---------- 히어로 — 2단 구성: 왼쪽 카피 + 오른쪽 연출 무대 ---------- */
 .hero{
@@ -394,6 +400,16 @@ footer{
   padding:30px 20px;text-align:center;font-size:.82rem;line-height:1.9;
 }
 footer .org{color:var(--on-brand);font-weight:700;font-size:.9rem}
+/* 푸터 기관 로고 스트립 — 흰 칩 위에 표시 */
+.footer-logos{
+  display:flex;justify-content:center;align-items:center;
+  gap:10px;flex-wrap:wrap;margin-bottom:18px;
+}
+.footer-logos .logo-chip{
+  background:var(--paper);border-radius:6px;
+  padding:6px 12px;display:inline-flex;align-items:center;
+}
+.footer-logos img{height:30px;width:auto;max-width:190px;object-fit:contain}
 
 /* ---------- noscript ---------- */
 .noscript-note{padding:48px 20px;text-align:center;color:var(--muted)}
@@ -485,7 +501,16 @@ const $ = id => document.getElementById(id);
   } else {
     slot.textContent = SITE.orgName;
   }
-  $("progSlot").textContent = SITE.programName;
+  const prog = $("progSlot");
+  if (SITE.programLogo){
+    const pimg = new Image();
+    pimg.src = SITE.programLogo;
+    pimg.alt = SITE.programName;
+    pimg.onerror = () => { pimg.remove(); prog.textContent = SITE.programName; };
+    prog.appendChild(pimg);
+  } else {
+    prog.textContent = SITE.programName;
+  }
 })();
 
 /* ---------- 감속 설정 ---------- */
@@ -967,8 +992,15 @@ syncFromHash();
   resetIdle();
 })();
 
-/* ---------- 푸터 ---------- */
-$("footerSlot").innerHTML = SITE.footerLines.map(l => `<div>${l}</div>`).join("");
+/* ---------- 푸터 — 기관 로고 스트립 + 문구 ---------- */
+(function(){
+  const logos = (SITE.footerLogos || [])
+    .map(l => `<span class="logo-chip"><img src="${l.src}" alt="${l.alt}" onerror="this.parentNode.remove()"></span>`)
+    .join("");
+  $("footerSlot").innerHTML =
+    (logos ? `<div class="footer-logos">${logos}</div>` : "") +
+    SITE.footerLines.map(l => `<div>${l}</div>`).join("");
+})();
 </script>
 </body>
 </html>
