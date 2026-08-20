@@ -143,6 +143,11 @@ button{font-family:inherit;cursor:pointer}
 }
 .thumb img{width:100%;height:100%;object-fit:cover}
 .thumb-emoji{font-size:44px;line-height:1}
+/* 영상이 있는 카드 — 재생 삼각형 (인라인 SVG, 반투명 원) */
+.play-badge{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.play-badge svg{width:44px;height:44px}
+.play-badge .pb-c{fill:var(--overlay-bg)}
+.play-badge .pb-t{fill:var(--on-brand)}
 .label{padding:12px 14px 14px;display:flex;flex-direction:column;gap:2px;flex:1}
 .card-title{font-size:1.05rem;font-weight:600;line-height:1.45;color:var(--ink)}
 .byline{font-size:.82rem;color:var(--muted)}
@@ -275,13 +280,44 @@ const LINK_LABEL = { app: "배포 링크", video: "시연 영상", extra: "기�
 
 $("sectionTitleSlot").innerHTML = `${SITE.sectionTitle}<small>${SITE.sectionHint}</small>`;
 
-/* 카드용 썸네일 — 4회차에서 이미지·유튜브 우선순위가 붙습니다 */
+/* 유튜브 주소 4형태에서 영상 ID 추출: youtu.be/ID · watch?v=ID · shorts/ID · embed/ID */
+function ytId(url){
+  if (!url) return "";
+  const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|shorts\/|embed\/))([\w-]{6,})/);
+  return m ? m[1] : "";
+}
+
+function playBadge(){
+  const s = el("span", "play-badge");
+  s.innerHTML = '<svg viewBox="0 0 48 48" aria-hidden="true"><circle class="pb-c" cx="24" cy="24" r="21"/><path class="pb-t" d="M19.5 15.5 34 24l-14.5 8.5z"/></svg>';
+  return s;
+}
+
+/* 썸네일 우선순위 (명세 7절): ① item.image → ② 유튜브 hqdefault → ③ 이모지 카드
+   maxresdefault는 영상에 따라 404가 나므로 쓰지 않습니다.
+   유튜브 썸네일은 외부 자원 — 실패하면 onerror로 이모지 카드까지 떨어집니다. */
 function makeThumb(item){
   const wrap = el("span", "thumb");
-  const e = el("span", "thumb-emoji");
-  e.textContent = item.emoji || "🧩";
-  e.setAttribute("aria-hidden", "true");
-  wrap.appendChild(e);
+  const yid = ytId(item.links.video);
+  const showEmoji = () => {
+    wrap.textContent = "";
+    const e = el("span", "thumb-emoji");
+    e.textContent = item.emoji || "🧩";
+    e.setAttribute("aria-hidden", "true");
+    wrap.appendChild(e);
+    if (yid) wrap.appendChild(playBadge());
+  };
+  const sources = [];
+  if (item.image) sources.push(item.image);
+  if (yid) sources.push(`https://img.youtube.com/vi/${yid}/hqdefault.jpg`);
+  if (!sources.length){ showEmoji(); return wrap; }
+  let si = 0;
+  const img = new Image();
+  img.alt = item.title;
+  img.onerror = () => { si++; si < sources.length ? (img.src = sources[si]) : showEmoji(); };
+  img.src = sources[0];
+  wrap.appendChild(img);
+  if (yid) wrap.appendChild(playBadge());
   return wrap;
 }
 
