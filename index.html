@@ -122,6 +122,15 @@ button{font-family:inherit;cursor:pointer}
 }
 .section-title{font-size:1.2rem;font-weight:700;letter-spacing:-.01em}
 .section-title small{display:block;font-size:.82rem;font-weight:400;color:var(--muted)}
+.filters{display:flex;gap:6px;flex-wrap:wrap}
+.filter-btn{
+  border:1px solid var(--line);background:var(--paper);color:var(--muted);
+  font-size:.85rem;font-weight:500;min-height:44px;padding:8px 16px;
+  border-radius:var(--radius);
+  transition:border-color .15s ease, color .15s ease;
+}
+.filter-btn:hover{border-color:var(--brand);color:var(--brand)}
+.filter-btn[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:var(--on-brand);font-weight:700}
 
 /* ---------- 갤러리 그리드 (4열 → 2열 → 1열) ---------- */
 .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
@@ -426,16 +435,64 @@ function makeCard(item){
   meta.insertAdjacentHTML("beforeend", linkStateHTML(item));
   label.append(title, by, meta);
   card.appendChild(label);
-  card.addEventListener("click", () => openPlacard(item));
+  card.addEventListener("click", () => requestOpen(item));
   return card;
+}
+
+/* ---------- 정렬: 기수 내림차순(최신 먼저) → 번호 오름차순 ----------
+   배열 순서에 의존하지 않습니다 */
+const cohortRank = key => {
+  const i = COHORTS.findIndex(c => c.key === key);
+  return i < 0 ? COHORTS.length : i;
+};
+const SORTED = [...ITEMS].sort((a, b) =>
+  cohortRank(a.cohort) - cohortRank(b.cohort) || a.no - b.no);
+
+/* (기수, 번호) 조합 중복 경고 */
+(function(){
+  const seen = new Set();
+  ITEMS.forEach(it => {
+    const k = `${it.cohort}-${it.no}`;
+    if (seen.has(k)) console.warn(`ITEMS: 기수·번호 중복 — ${k} (${it.title})`);
+    seen.add(k);
+  });
+})();
+
+/* ---------- 기수 필터 — 기본 선택은 최신 기수, "전체"는 마지막 ---------- */
+const filtersEl = $("filters");
+const countOf = key => ITEMS.filter(it => it.cohort === key).length;
+const withItems = COHORTS.filter(c => countOf(c.key) > 0);   /* 작품 0개 기수는 버튼을 만들지 않음 */
+let currentFilter = withItems.length ? withItems[0].key : "all";
+
+function buildFilters(){
+  filtersEl.textContent = "";
+  const defs = [
+    ...withItems.map(c => ({ key: c.key, text: `${c.label} · ${c.period}` })),
+    { key: "all", text: `전체 (${ITEMS.length})` },
+  ];
+  defs.forEach(d => {
+    const b = el("button", "filter-btn");
+    b.textContent = d.text;
+    b.setAttribute("aria-pressed", String(d.key === currentFilter));
+    b.addEventListener("click", () => {
+      currentFilter = d.key;
+      filtersEl.querySelectorAll(".filter-btn").forEach(x => x.setAttribute("aria-pressed", "false"));
+      b.setAttribute("aria-pressed", "true");
+      render();   /* 필터는 URL을 바꾸지 않습니다 */
+    });
+    filtersEl.appendChild(b);
+  });
 }
 
 function render(){
   grid.textContent = "";
-  ITEMS.forEach(item => grid.appendChild(makeCard(item)));   /* 6회차에서 필터·정렬 적용 */
+  SORTED
+    .filter(it => currentFilter === "all" || it.cohort === currentFilter)
+    .forEach(item => grid.appendChild(makeCard(item)));
   $("empty").textContent = "이 기수의 작품은 준비 중입니다.";
   $("empty").hidden = grid.children.length > 0;
 }
+buildFilters();
 render();
 
 /* ---------- 도록형 작품 카드 (모달) ---------- */
@@ -493,11 +550,11 @@ function closePlacard(){
   if (lastFocus && document.contains(lastFocus)) lastFocus.focus();
 }
 
-$("pClose").addEventListener("click", closePlacard);
-overlay.addEventListener("click", e => { if (e.target === overlay) closePlacard(); });
+$("pClose").addEventListener("click", requestClose);
+overlay.addEventListener("click", e => { if (e.target === overlay) requestClose(); });
 document.addEventListener("keydown", e => {
   if (!overlay.classList.contains("show")) return;
-  if (e.key === "Escape"){ closePlacard(); return; }
+  if (e.key === "Escape"){ requestClose(); return; }
   if (e.key === "Tab"){
     /* 포커스 트랩 — 카드가 열린 동안 Tab이 배경으로 나가지 않게 */
     const f = overlay.querySelectorAll('a[href], button:not([disabled])');
@@ -508,6 +565,32 @@ document.addEventListener("keydown", e => {
     else if (!overlay.contains(document.activeElement)){ first.focus(); e.preventDefault(); }
   }
 });
+
+/* ---------- 딥링크 — #w-기수-번호 (예: #w-1-07) ----------
+   카드 클릭 → 주소 변경 → hashchange가 모달을 엽니다.
+   공유한 주소로 접속하면 해당 모달이 열린 상태로 시작하고, 뒤로가기로 닫힙니다. */
+const hashOf = item => `#w-${item.cohort}-${pad2(item.no)}`;
+function itemByHash(h){
+  const m = /^#w-(.+)-(\d+)$/.exec(h);
+  if (!m) return null;
+  return ITEMS.find(it => it.cohort === m[1] && it.no === Number(m[2])) || null;
+}
+function requestOpen(item){
+  if (openItem === item) return;
+  location.hash = hashOf(item);
+}
+function requestClose(){
+  /* 주소에 작품 해시가 있으면 뒤로가기로 주소까지 함께 되돌립니다 */
+  if (itemByHash(location.hash)) history.back();
+  else closePlacard();
+}
+function syncFromHash(){
+  const item = itemByHash(location.hash);
+  if (item) openPlacard(item);
+  else closePlacard();
+}
+window.addEventListener("hashchange", syncFromHash);
+syncFromHash();
 
 /* ---------- 푸터 ---------- */
 $("footerSlot").innerHTML = SITE.footerLines.map(l => `<div>${l}</div>`).join("");
