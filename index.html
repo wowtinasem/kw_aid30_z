@@ -161,6 +161,66 @@ button{font-family:inherit;cursor:pointer}
 .lk.off{color:var(--line);opacity:.7}
 .empty{padding:48px 0;text-align:center;color:var(--muted)}
 
+/* ---------- 도록형 작품 카드 (모달) ---------- */
+body.modal-open{overflow:hidden}
+.overlay{
+  position:fixed;inset:0;background:var(--overlay-bg);
+  display:none;align-items:center;justify-content:center;padding:20px;z-index:50;
+}
+.overlay.show{display:flex;animation:fadeIn .18s ease}
+.placard{
+  background:var(--paper);border-radius:10px;max-width:600px;width:100%;
+  max-height:90vh;overflow:auto;
+  box-shadow:var(--shadow-modal);
+  animation:placardIn .22s ease;
+}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes placardIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+/* 감속 설정 — 이동 없이 페이드만 */
+@media (prefers-reduced-motion: reduce){
+  .placard{animation:fadeIn .18s ease}
+}
+.placard-head{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:8px 8px 8px 22px;border-bottom:1px solid var(--line);
+}
+.p-badge{font-size:.82rem;font-weight:700;letter-spacing:.08em;color:var(--brand)}
+.p-close{
+  width:44px;height:44px;border:none;background:none;color:var(--muted);
+  display:inline-flex;align-items:center;justify-content:center;border-radius:var(--radius);
+}
+.p-close:hover{color:var(--ink);background:var(--brand-tint)}
+.p-close svg{width:18px;height:18px}
+.placard-title-block{padding:18px 22px 0}
+.placard h2{font-size:1.4rem;font-weight:700;letter-spacing:-.02em;line-height:1.35}
+.placard .artist{font-size:.9rem;color:var(--muted);margin-top:2px}
+.placard .artist b{color:var(--ink)}
+.p-thumb{margin:16px 22px 0;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.p-thumb .thumb-emoji{font-size:60px}
+.spec{margin:18px 22px 0;border-top:2px solid var(--brand)}
+.spec-row{display:grid;grid-template-columns:96px 1fr;border-bottom:1px solid var(--line)}
+.spec-row dt{
+  background:var(--brand-tint);color:var(--brand);
+  font-size:.82rem;font-weight:700;letter-spacing:.04em;
+  padding:12px;display:flex;align-items:flex-start;
+}
+.spec-row dd{font-size:.9rem;padding:12px 14px;white-space:pre-line}
+/* 모노는 「어떻게 시켰나」 칸에만 — 요청문이 '적어 낸 말'로 보이게 */
+.spec-row dd.mono{font-family:var(--font-mono);font-size:.85rem;background:var(--bg)}
+@media (max-width:680px){.spec-row{grid-template-columns:82px 1fr}}
+.placard-actions{display:flex;gap:10px;flex-wrap:wrap;padding:20px 22px 24px}
+.btn{
+  border:1px solid var(--line);border-radius:var(--radius);
+  font-size:.95rem;font-weight:700;min-height:48px;padding:10px 20px;
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  text-decoration:none;background:var(--paper);color:var(--ink);
+  transition:background .15s ease, border-color .15s ease;
+}
+.btn-primary{background:var(--brand);border-color:var(--brand);color:var(--on-brand);flex:1;min-width:160px}
+.btn-primary:hover{background:var(--brand-deep)}
+.btn:not(.btn-primary):not(:disabled):hover{border-color:var(--muted)}
+.btn:disabled{cursor:not-allowed;color:var(--muted);background:var(--bg);font-weight:500}
+
 /* ---------- 푸터 ---------- */
 footer{
   background:var(--brand-deep);color:var(--on-brand-muted);
@@ -200,6 +260,23 @@ footer .org{color:var(--on-brand);font-weight:700;font-size:.9rem}
   <div class="grid" id="grid"></div>
   <p class="empty" id="empty" hidden></p>
 </main>
+
+<!-- ================= 도록형 작품 카드 (모달) ================= -->
+<div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-labelledby="pTitle">
+  <article class="placard">
+    <div class="placard-head">
+      <span class="p-badge" id="pBadge"></span>
+      <button class="p-close" id="pClose" aria-label="소개 카드 닫기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <div class="placard-title-block">
+      <h2 id="pTitle"></h2>
+      <p class="artist" id="pArtist"></p>
+    </div>
+    <div class="p-thumb" id="pThumb"></div>
+    <dl class="spec" id="pSpec"></dl>
+    <div class="placard-actions" id="pActions"></div>
+  </article>
+</div>
 
 <!-- ================= 푸터 ================= -->
 <footer id="footerSlot"></footer>
@@ -349,6 +426,7 @@ function makeCard(item){
   meta.insertAdjacentHTML("beforeend", linkStateHTML(item));
   label.append(title, by, meta);
   card.appendChild(label);
+  card.addEventListener("click", () => openPlacard(item));
   return card;
 }
 
@@ -359,6 +437,77 @@ function render(){
   $("empty").hidden = grid.children.length > 0;
 }
 render();
+
+/* ---------- 도록형 작품 카드 (모달) ---------- */
+const overlay = $("overlay");
+let lastFocus = null;
+let openItem = null;
+
+function specRow(label, text, mono){
+  const row = el("div", "spec-row");
+  const dt = el("dt"); dt.textContent = label;
+  const dd = el("dd"); if (mono) dd.className = "mono";
+  dd.textContent = text;
+  row.append(dt, dd);
+  return row;
+}
+
+function openPlacard(item){
+  openItem = item;
+  lastFocus = document.activeElement;
+  $("pBadge").textContent = SITE.badge(item.cohort, item.no);
+  $("pTitle").textContent = item.title;
+  $("pArtist").innerHTML = SITE.artistLine(item);
+  const pt = $("pThumb"); pt.textContent = ""; pt.appendChild(makeThumb(item));
+  const spec = $("pSpec"); spec.textContent = "";
+  spec.appendChild(specRow(SITE.labelTopic, item.topic));
+  if (item.usage) spec.appendChild(specRow(SITE.labelUsage, item.usage));
+  /* prompt가 비면 칸 전체(라벨 포함)를 렌더하지 않습니다 (명세 8절) */
+  if (item.prompt) spec.appendChild(specRow(SITE.labelPrompt, item.prompt, true));
+  const act = $("pActions"); act.textContent = "";
+  ["app", "video", "extra"].forEach(k => {
+    const url = item.links[k];
+    if (url){
+      const a = el("a", "btn" + (k === "app" ? " btn-primary" : ""));
+      a.href = url; a.target = "_blank"; a.rel = "noopener noreferrer";
+      a.textContent = SITE.linkText[k];
+      act.appendChild(a);
+    } else {
+      /* 링크가 없으면 숨기지 않고 비활성 + 안내 문구 */
+      const b = el("button", "btn");
+      b.disabled = true;
+      b.textContent = SITE.linkNone[k];
+      act.appendChild(b);
+    }
+  });
+  overlay.classList.add("show");
+  document.body.classList.add("modal-open");
+  $("pClose").focus();
+}
+
+function closePlacard(){
+  if (!openItem) return;
+  openItem = null;
+  overlay.classList.remove("show");
+  document.body.classList.remove("modal-open");
+  if (lastFocus && document.contains(lastFocus)) lastFocus.focus();
+}
+
+$("pClose").addEventListener("click", closePlacard);
+overlay.addEventListener("click", e => { if (e.target === overlay) closePlacard(); });
+document.addEventListener("keydown", e => {
+  if (!overlay.classList.contains("show")) return;
+  if (e.key === "Escape"){ closePlacard(); return; }
+  if (e.key === "Tab"){
+    /* 포커스 트랩 — 카드가 열린 동안 Tab이 배경으로 나가지 않게 */
+    const f = overlay.querySelectorAll('a[href], button:not([disabled])');
+    if (!f.length) return;
+    const first = f[0], last = f[f.length - 1];
+    if (e.shiftKey && document.activeElement === first){ last.focus(); e.preventDefault(); }
+    else if (!e.shiftKey && document.activeElement === last){ first.focus(); e.preventDefault(); }
+    else if (!overlay.contains(document.activeElement)){ first.focus(); e.preventDefault(); }
+  }
+});
 
 /* ---------- 푸터 ---------- */
 $("footerSlot").innerHTML = SITE.footerLines.map(l => `<div>${l}</div>`).join("");
