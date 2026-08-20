@@ -267,15 +267,6 @@ button{font-family:inherit;cursor:pointer}
   .ripple{animation:none;opacity:var(--o)}
 }
 
-/* ---------- 소개 스트립 ---------- */
-.stats{
-  background:var(--paper);border-bottom:1px solid var(--line);
-  display:flex;justify-content:center;align-items:center;
-  gap:8px 28px;flex-wrap:wrap;
-  padding:12px 20px;font-size:.9rem;color:var(--muted);
-}
-.stats b{color:var(--ink);font-weight:700;margin-right:4px}
-
 /* ---------- 작품 목록 ---------- */
 .works{max-width:1200px;width:100%;margin:0 auto;padding:0 20px 64px}
 .toolbar{
@@ -438,9 +429,6 @@ footer .org{color:var(--on-brand);font-weight:700;font-size:.9rem}
   </div>
 </header>
 
-<!-- ================= 소개 스트립 ================= -->
-<div class="stats" id="statsSlot"></div>
-
 <!-- ================= 작품 목록 ================= -->
 <main class="works">
   <div class="toolbar">
@@ -507,10 +495,6 @@ $("titleSlot").innerHTML =
   ).join(" ") +
   `<br><span class="glow">${SITE.titleGlow}</span>`;
 $("subSlot").innerHTML = SITE.subHTML;
-
-/* ---------- 소개 스트립 ---------- */
-$("statsSlot").innerHTML =
-  SITE.stats.map(s => `<span><b>${s.value}</b>${s.label}</span>`).join("");
 
 /* ---------- 타이핑 카드 — 문구를 데이터에서 생성 (명세 5절 시그니처) ---------- */
 (function typing(){
