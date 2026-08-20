@@ -18,6 +18,13 @@ const SITE = {
   titleGlow:   "만들었습니다",          // 둘째 줄 (그라데이션 + 시머)
   subHTML:     "직장을 다니며 배운 재직자들이 자기 업무에 필요한 도구를 직접 만들었습니다. <b>작품을 누르면</b> 무엇을 어떻게 시켰는지 열립니다.",
 
+  /* 히어로 타이핑 카드 — 과정 홍보 문구. 한 줄짜리 문장 3개가 번갈아 출력됩니다 */
+  prompts: [
+    "말로 시키면 됩니다 — AI 시대의 새로운 업무 역량",
+    "코드 없이 대화만으로 업무 도구를 만듭니다",
+    "대표가 먼저 배우면 회사의 속도가 달라집니다",
+  ],
+
   /* 소개 스트립 — 3개 고정 */
   stats: [                             // TODO: 실제 수강생·작품 수 확정 필요 — 부록 B
     { value: "30",   label: "수강생" },
@@ -29,9 +36,9 @@ const SITE = {
   sectionTitle: "작품 목록",
   sectionHint:  "작품을 선택하면 소개 카드가 열립니다",
 
-  /* 배지·문구 형식 */
-  badge:      (cohort, n) => `${cohort}기 · ${String(n).padStart(2, "0")}호`,
-  artistLine: item => `이 앱은 <b>${item.group} ${item.author}</b> 님의 작품입니다.`,
+  /* 배지·문구 형식 — 이 전시관은 대표님 대상 Z트랙 단일 과정입니다 */
+  badge:      (cohort, n) => `Z트랙 · ${String(n).padStart(2, "0")}호`,
+  artistLine: item => `이 앱은 <b>${item.group} ${item.author} 대표님</b>의 작품입니다.`,
 
   labelTopic:  "작품 주제",
   labelUsage:  "사용 방법",
@@ -54,12 +61,10 @@ const SITE = {
 };
 
 
-/* ---------- ② COHORTS — 기수(필터) ----------
-   ※ 최신 기수를 배열 맨 앞에 둡니다. 첫 화면 기본 선택이 됩니다.
-   ※ 기수마다 색을 다르게 주지 않습니다.                        */
+/* ---------- ② COHORTS — 트랙(정렬·배지용) ----------
+   ※ 대표님 대상 Z트랙 단일 과정. 새 트랙·기수가 생기면 맨 앞에 추가합니다. */
 const COHORTS = [
-  { key: "2", label: "2기", period: "2026 하반기" },
-  { key: "1", label: "1기", period: "2026 상반기" },
+  { key: "z", label: "Z트랙", period: "2026" },
 ];
 
 
@@ -83,7 +88,7 @@ const ITEMS = [
 
   /* 예시 ① 세 링크가 모두 있는 경우 */
   {
-    no: 1, cohort: "2",
+    no: 1, cohort: "z",
     group: "○○과", author: "김○○",
     title: "도자기 타임머신",
     topic: "도자기 사진을 올리면 제작 시기와 기법을 추정해 설명해 줍니다. 도록 작성용 초안을 만드는 데 씁니다.",
@@ -100,7 +105,7 @@ const ITEMS = [
 
   /* 예시 ② 이미지가 없고 유튜브만 있는 경우 — 썸네일이 자동으로 채워집니다 */
   {
-    no: 2, cohort: "2",
+    no: 2, cohort: "z",
     group: "○○과", author: "이○○",
     title: "전시 관람 동선 카드",
     topic: "관람객이 남은 시간을 입력하면 그 시간에 맞는 관람 순서를 추천합니다.",
@@ -117,7 +122,7 @@ const ITEMS = [
 
   /* 예시 ③ 링크가 아직 없는 경우 — 버튼이 비활성되고 자동 전시에서 제외됩니다 */
   {
-    no: 3, cohort: "2",
+    no: 3, cohort: "z",
     group: "○○과", author: "박○○",
     title: "재료 소진 알림판",
     topic: "공방 재료의 남은 수량을 기록하고 기준 이하로 떨어지면 표시해 줍니다.",
@@ -128,9 +133,9 @@ const ITEMS = [
     emoji: "🧵"
   },
 
-  /* 예시 ④ 지난 기수 — 필터에서 1기를 선택했을 때만 보입니다 */
+  /* 예시 ④ 이미지가 있는 경우 */
   {
-    no: 1, cohort: "1",
+    no: 4, cohort: "z",
     group: "○○과", author: "최○○",
     title: "수업 기록 정리 도구",
     topic: "수업 중 적은 메모를 붙여 넣으면 주제별로 묶어 정리해 줍니다.",
@@ -144,5 +149,27 @@ const ITEMS = [
     image: "img/1-01-notes.png",
     emoji: "📝"
   },
+
+];
+
+
+/* ---------- ④ VIDEOS — 영상 목록 ----------
+   [영상] 버튼을 눌렀을 때 보이는 카드들입니다. 영상 하나당 객체 하나.
+   youtube : 유튜브 주소 — 일반·쇼츠·youtu.be 모두 가능. 썸네일이 자동으로 걸립니다
+   file    : 직접 올린 영상 파일 경로 (예: "video/clip-01.mp4") — youtube 대신 사용.
+             쇼츠(세로) 영상 파일도 그대로 재생됩니다
+   ※ youtube와 file 중 하나만 채우세요. 둘 다 있으면 youtube가 우선입니다
+   title / group / author / desc : 카드와 재생 화면에 표시                    */
+const VIDEOS = [
+
+  /* 예시 ① 유튜브 링크 */
+  { title: "작품 시연 영상 예시", group: "○○컴퍼니", author: "김○○",
+    youtube: "https://youtu.be/XXXXXXXXXXX", file: "",
+    desc: "작품 시연 장면을 담은 영상입니다." },
+
+  /* 예시 ② 직접 올린 쇼츠 영상 — mp4 파일을 video/ 폴더에 두고 경로를 적으세요 */
+  { title: "쇼츠 예시 (직접 업로드)", group: "○○컴퍼니", author: "이○○",
+    youtube: "", file: "video/sample-shorts.mp4",
+    desc: "저장소 video/ 폴더에 올린 영상을 바로 재생합니다." },
 
 ];

@@ -303,7 +303,7 @@ button{font-family:inherit;cursor:pointer}
   background:var(--brand-tint);
   display:flex;align-items:center;justify-content:center;
 }
-.thumb img{width:100%;height:100%;object-fit:cover}
+.thumb img,.thumb video{width:100%;height:100%;object-fit:cover}
 .thumb-emoji{font-size:44px;line-height:1}
 /* 영상이 있는 카드 — 재생 삼각형 (인라인 SVG, 반투명 원) */
 .play-badge{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
@@ -360,6 +360,10 @@ body.modal-open{overflow:hidden}
 .placard .artist b{color:var(--ink)}
 .p-thumb{margin:16px 22px 0;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
 .p-thumb .thumb-emoji{font-size:60px}
+/* 영상 재생 화면 — 세로(쇼츠) 영상은 검은 여백과 함께 가운데 표시 */
+.player{position:relative;width:100%;aspect-ratio:16/9;background:var(--brand-deep)}
+.player iframe,.player video{position:absolute;inset:0;width:100%;height:100%;border:0}
+.player video{object-fit:contain}
 .spec{margin:18px 22px 0;border-top:2px solid var(--brand)}
 .spec-row{display:grid;grid-template-columns:96px 1fr;border-bottom:1px solid var(--line)}
 .spec-row dt{
@@ -433,7 +437,7 @@ footer .org{color:var(--on-brand);font-weight:700;font-size:.9rem}
 <main class="works">
   <div class="toolbar">
     <h2 class="section-title" id="sectionTitleSlot"></h2>
-    <div class="filters" id="filters" role="group" aria-label="기수 필터"></div>
+    <div class="filters" id="filters" role="group" aria-label="보기 선택"></div>
   </div>
   <div class="grid" id="grid"></div>
   <p class="empty" id="empty" hidden></p>
@@ -496,12 +500,12 @@ $("titleSlot").innerHTML =
   `<br><span class="glow">${SITE.titleGlow}</span>`;
 $("subSlot").innerHTML = SITE.subHTML;
 
-/* ---------- 타이핑 카드 — 문구를 데이터에서 생성 (명세 5절 시그니처) ---------- */
+/* ---------- 타이핑 카드 — 과정 홍보 문구 순환 (SITE.prompts) ---------- */
 (function typing(){
   const el = $("typeText");
-  const phrases = ITEMS
-    .map(it => (it.prompt || "").split("\n")[0].trim() || it.title)
-    .filter(Boolean);
+  const phrases = (SITE.prompts && SITE.prompts.length)
+    ? SITE.prompts
+    : ITEMS.map(it => (it.prompt || "").split("\n")[0].trim() || it.title).filter(Boolean);
   if (!el || !phrases.length) return;
   if (REDUCED) { el.textContent = phrases[0]; return; }   /* 최종 상태 즉시 표시 */
   let pi = 0, ci = 0, del = false;
@@ -691,38 +695,86 @@ const SORTED = [...ITEMS].sort((a, b) =>
   });
 })();
 
-/* ---------- 기수 필터 — 기본 선택은 최신 기수, "전체"는 마지막 ---------- */
+/* ---------- 보기 선택 — 바이브코딩(작품) / 영상 ---------- */
 const filtersEl = $("filters");
-const countOf = key => ITEMS.filter(it => it.cohort === key).length;
-const withItems = COHORTS.filter(c => countOf(c.key) > 0);   /* 작품 0개 기수는 버튼을 만들지 않음 */
-let currentFilter = withItems.length ? withItems[0].key : "all";
+const VIDEO_LIST = (typeof VIDEOS !== "undefined" && Array.isArray(VIDEOS)) ? VIDEOS : [];
+const MODES = [
+  { key: "app",   label: "바이브코딩" },
+  { key: "video", label: "영상" },
+];
+let mode = "app";
 
 function buildFilters(){
   filtersEl.textContent = "";
-  const defs = [
-    ...withItems.map(c => ({ key: c.key, text: `${c.label} · ${c.period}` })),
-    { key: "all", text: `전체 (${ITEMS.length})` },
-  ];
-  defs.forEach(d => {
+  MODES.forEach(m => {
     const b = el("button", "filter-btn");
-    b.textContent = d.text;
-    b.setAttribute("aria-pressed", String(d.key === currentFilter));
+    b.textContent = m.label;
+    b.setAttribute("aria-pressed", String(m.key === mode));
     b.addEventListener("click", () => {
-      currentFilter = d.key;
+      mode = m.key;
       filtersEl.querySelectorAll(".filter-btn").forEach(x => x.setAttribute("aria-pressed", "false"));
       b.setAttribute("aria-pressed", "true");
-      render();   /* 필터는 URL을 바꾸지 않습니다 */
+      render();   /* 전환은 URL을 바꾸지 않습니다 */
     });
     filtersEl.appendChild(b);
   });
 }
 
+/* 영상 카드 — 유튜브 링크(썸네일 자동) 또는 직접 올린 파일(첫 화면 미리보기) */
+function makeVideoCard(v, i){
+  const card = el("button", "card");
+  card.setAttribute("aria-haspopup", "dialog");
+  card.setAttribute("aria-label",
+    `영상 ${pad2(i + 1)} ${v.title} — ${[v.group, v.author].filter(Boolean).join(" ")}. 재생 카드 열기`);
+  const wrap = el("span", "thumb");
+  const yid = ytId(v.youtube);
+  const showEmoji = () => {
+    wrap.textContent = "";
+    const e = el("span", "thumb-emoji");
+    e.textContent = "🎬";
+    e.setAttribute("aria-hidden", "true");
+    wrap.appendChild(e);
+    wrap.appendChild(playBadge());
+  };
+  if (yid){
+    const img = new Image();
+    img.alt = v.title;
+    img.onerror = showEmoji;
+    img.src = `https://img.youtube.com/vi/${yid}/hqdefault.jpg`;
+    wrap.appendChild(img);
+    wrap.appendChild(playBadge());
+  } else if (v.file){
+    const vid = document.createElement("video");
+    vid.src = v.file;
+    vid.muted = true; vid.preload = "metadata"; vid.playsInline = true;
+    vid.onerror = showEmoji;
+    wrap.appendChild(vid);
+    wrap.appendChild(playBadge());
+  } else {
+    showEmoji();
+  }
+  card.appendChild(wrap);
+  const label = el("span", "label");
+  const title = el("span", "card-title"); title.textContent = v.title;
+  const by = el("span", "byline"); by.textContent = [v.group, v.author].filter(Boolean).join(" · ");
+  const meta = el("span", "meta-row");
+  const badge = el("span", "badge"); badge.textContent = `영상 ${pad2(i + 1)}`;
+  meta.appendChild(badge);
+  label.append(title, by, meta);
+  card.appendChild(label);
+  card.addEventListener("click", () => openVideo(v));
+  return card;
+}
+
 function render(){
   grid.textContent = "";
-  SORTED
-    .filter(it => currentFilter === "all" || it.cohort === currentFilter)
-    .forEach(item => grid.appendChild(makeCard(item)));
-  $("empty").textContent = "이 기수의 작품은 준비 중입니다.";
+  if (mode === "app"){
+    SORTED.forEach(item => grid.appendChild(makeCard(item)));
+    $("empty").textContent = "작품이 준비 중입니다.";
+  } else {
+    VIDEO_LIST.forEach((v, i) => grid.appendChild(makeVideoCard(v, i)));
+    $("empty").textContent = "영상이 준비 중입니다.";
+  }
   $("empty").hidden = grid.children.length > 0;
 }
 buildFilters();
@@ -755,7 +807,9 @@ function openPlacard(item, opts){
   if (item.usage) spec.appendChild(specRow(SITE.labelUsage, item.usage));
   /* prompt가 비면 칸 전체(라벨 포함)를 렌더하지 않습니다 (명세 8절) */
   if (item.prompt) spec.appendChild(specRow(SITE.labelPrompt, item.prompt, true));
+  spec.hidden = false;
   const act = $("pActions"); act.textContent = "";
+  act.hidden = false;
   ["app", "video", "extra"].forEach(k => {
     const url = item.links[k];
     if (url){
@@ -781,7 +835,51 @@ function closePlacard(opts){
   openItem = null;
   overlay.classList.remove("show");
   document.body.classList.remove("modal-open");
+  $("pThumb").textContent = "";   /* 재생 중인 영상·플레이어 정지 */
   if (!(opts && opts.silent) && lastFocus && document.contains(lastFocus)) lastFocus.focus();
+}
+
+/* ---------- 영상 재생 카드 — 유튜브 임베드 또는 파일 재생 ---------- */
+function openVideo(v){
+  openItem = v;
+  lastFocus = document.activeElement;
+  $("pBadge").textContent = "영상";
+  $("pTitle").textContent = v.title;
+  $("pArtist").innerHTML = (v.group || v.author)
+    ? `<b>${[v.group, v.author].filter(Boolean).join(" ")} 대표님</b>의 영상입니다.`
+    : "";
+  const pt = $("pThumb"); pt.textContent = "";
+  const yid = ytId(v.youtube);
+  const player = el("div", "player");
+  if (yid){
+    const f = document.createElement("iframe");
+    f.src = `https://www.youtube.com/embed/${yid}`;
+    f.title = v.title;
+    f.allow = "autoplay; encrypted-media; picture-in-picture";
+    f.allowFullscreen = true;
+    player.appendChild(f);
+  } else if (v.file){
+    const vid = document.createElement("video");
+    vid.src = v.file;
+    vid.controls = true;
+    vid.playsInline = true;
+    player.appendChild(vid);
+  }
+  pt.appendChild(player);
+  const spec = $("pSpec"); spec.textContent = "";
+  if (v.desc) spec.appendChild(specRow("영상 소개", v.desc));
+  spec.hidden = !spec.children.length;
+  const act = $("pActions"); act.textContent = "";
+  if (yid){
+    const a = el("a", "btn btn-primary");
+    a.href = v.youtube; a.target = "_blank"; a.rel = "noopener noreferrer";
+    a.textContent = "유튜브에서 보기 ↗";
+    act.appendChild(a);
+  }
+  act.hidden = !act.children.length;
+  overlay.classList.add("show");
+  document.body.classList.add("modal-open");
+  $("pClose").focus();
 }
 
 $("pClose").addEventListener("click", requestClose);
