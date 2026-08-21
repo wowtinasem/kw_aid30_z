@@ -13,19 +13,6 @@ window.ADMIN_DATA = {
       "prompt": "",
       "emoji": "🎨",
       "image": "https://kyewon-vibe-coding-glossary.vercel.app/assets/og-vibe-coding.png"
-    },
-    {
-      "author": "김세진",
-      "group": "OVdesign",
-      "title": "OVdesign 홍보영상",
-      "app": "",
-      "video": "https://www.youtube.com/shorts/y_CQOjzsFGI",
-      "extra": "",
-      "topic": "",
-      "usage": "",
-      "prompt": "",
-      "emoji": "🎨",
-      "image": ""
     }
   ],
   "videos": [
