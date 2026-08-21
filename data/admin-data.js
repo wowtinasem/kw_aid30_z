@@ -36,6 +36,14 @@ window.ADMIN_DATA = {
       "youtube": "https://youtu.be/wOmW6o1dlN4",
       "file": "",
       "desc": "AI로 제작한 광고샘플 영상입니다."
+    },
+    {
+      "title": "OVdesign 홍보영상",
+      "author": "김세진 대표",
+      "group": "OVdesign",
+      "youtube": "https://www.youtube.com/shorts/y_CQOjzsFGI",
+      "file": "",
+      "desc": ""
     }
   ]
 };
